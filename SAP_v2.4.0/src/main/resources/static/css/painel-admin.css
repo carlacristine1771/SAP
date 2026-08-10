@@ -1,0 +1,124 @@
+  .panel-section{display:none}.panel-section.active{display:block}
+    .form-card{max-width:680px;margin:0 auto;background:var(--white);border-radius:var(--r-lg);padding:36px 40px;border:1px solid var(--gray-100);box-shadow:0 2px 20px rgba(0,0,0,.05)}
+    .err-msg{padding:10px 14px;background:#fef0f0;border:1px solid #f5c6c6;border-radius:var(--r-sm);color:#c0392b;font-size:13px;margin-bottom:16px;display:none}
+    .role-select-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:22px}
+    .role-option{border:2px solid var(--gray-200);border-radius:var(--r-md);padding:16px 14px;cursor:pointer;transition:all .2s;text-align:center}
+    .role-option:hover{border-color:var(--senac-orange)}
+    .role-option.selected.admin{border-color:#1f6fd1;background:#eaf3ff}
+    .role-option.selected.psico{border-color:var(--senac-navy);background:var(--senac-navy-soft)}
+    .role-option.selected.coord,.role-option.selected.inst{border-color:var(--senac-orange);background:var(--senac-orange-soft)}
+    [data-theme="dark"] .form-card,[data-theme="dark"] .unidade-card{background:#1b2236;border-color:#35405f;box-shadow:0 8px 24px rgba(0,0,0,.28)}
+    [data-theme="dark"] .unidade-card:hover{border-color:#5d8fe8;box-shadow:0 10px 28px rgba(0,0,0,.32)}
+    [data-theme="dark"] .unidade-card-name,[data-theme="dark"] .role-option strong{color:#f2f5ff}
+    [data-theme="dark"] .unidade-card-region,[data-theme="dark"] .role-option span{color:#aeb7d4}
+    [data-theme="dark"] .role-option{background:#161d2e;border-color:#303a58}
+    [data-theme="dark"] .role-option:hover{border-color:#5d8fe8;background:#1d2640}
+    [data-theme="dark"] .role-option.selected.psico{background:#22304d;border-color:#5d8fe8}
+    [data-theme="dark"] .role-option.selected.coord,[data-theme="dark"] .role-option.selected.inst{background:#33250d;border-color:#d69a2d}
+    [data-theme="dark"] .us-chip{background:#28324f;color:#dbe5ff}
+    [data-theme="dark"] .err-msg{background:#311616;border-color:#6b3030;color:#ffb7b7}
+    .role-option svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.8;margin-bottom:8px;display:block;margin-left:auto;margin-right:auto}
+    .role-option strong{display:block;font-size:13px;font-weight:700;color:var(--senac-navy)}
+    .role-option span{font-size:11px;color:var(--gray-500)}
+    .unidade-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px;margin-top:24px}
+    .unidade-card{background:var(--white);border:1px solid var(--gray-100);border-radius:var(--r-md);padding:18px 20px;transition:all .2s}
+    .unidade-card:hover{border-color:var(--senac-orange);box-shadow:var(--sh-sm)}
+    .unidade-card-name{font-weight:700;font-size:14px;color:var(--senac-navy);margin-bottom:3px}
+    .unidade-card-region{font-size:12px;color:var(--gray-400)}
+    .unidade-card-stats{margin-top:10px;display:flex;gap:10px;flex-wrap:wrap}
+    .us-chip{font-size:11px;font-weight:600;padding:3px 8px;border-radius:20px;background:var(--senac-orange-soft);color:var(--senac-orange-d)}
+
+    [data-theme="dark"] .form-card,
+    [data-theme="dark"] .unidade-card{
+      background:linear-gradient(180deg,rgba(31,39,58,.98),rgba(23,30,47,.98));
+      border-color:rgba(142,154,180,.22);
+      box-shadow:0 12px 34px rgba(0,0,0,.22);
+    }
+    [data-theme="dark"] .unidade-card:hover,
+    [data-theme="dark"] .role-option:hover{
+      border-color:rgba(255,181,71,.44);
+      box-shadow:0 18px 42px rgba(0,0,0,.28);
+    }
+    [data-theme="dark"] .role-option{
+      background:#101827;
+      border-color:rgba(142,154,180,.28);
+    }
+    [data-theme="dark"] .role-option.selected.admin,
+    [data-theme="dark"] .role-option.selected.psico{
+      background:rgba(102,182,238,.14);
+      border-color:rgba(102,182,238,.44);
+    }
+    [data-theme="dark"] .role-option.selected.coord,
+    [data-theme="dark"] .role-option.selected.inst{
+      background:rgba(255,181,71,.14);
+      border-color:rgba(255,181,71,.44);
+    }
+    [data-theme="dark"] .unidade-card-name,
+    [data-theme="dark"] .role-option strong{color:var(--ink)}
+    [data-theme="dark"] .unidade-card-region,
+    [data-theme="dark"] .role-option span{color:var(--gray-500)}
+    [data-theme="dark"] .us-chip{
+      background:rgba(255,181,71,.12);
+      color:var(--senac-orange-mid);
+      border:1px solid rgba(255,181,71,.18);
+    }
+  
+
+
+/* v2.3.2 - Correções de contraste do modo escuro no painel Admin */
+[data-theme="dark"] .sidebar-admin .nav-link,
+html[data-theme="dark"] .sidebar-admin .nav-link{
+  color: rgba(245,247,251,.72) !important;
+}
+[data-theme="dark"] .sidebar-admin .nav-link:hover,
+html[data-theme="dark"] .sidebar-admin .nav-link:hover{
+  color: var(--ink) !important;
+  background: rgba(255,181,71,.10) !important;
+}
+[data-theme="dark"] .sidebar-admin .nav-link.active,
+html[data-theme="dark"] .sidebar-admin .nav-link.active{
+  color: var(--ink) !important;
+  background: rgba(255,181,71,.16) !important;
+  border-left-color: var(--senac-orange) !important;
+}
+[data-theme="dark"] .sidebar-admin .nav-label,
+html[data-theme="dark"] .sidebar-admin .nav-label{
+  color: inherit !important;
+}
+[data-theme="dark"] #panel-criar h2,
+html[data-theme="dark"] #panel-criar h2,
+[data-theme="dark"] .form-card h2,
+html[data-theme="dark"] .form-card h2{
+  color: var(--senac-orange-mid) !important;
+}
+[data-theme="dark"] .form-card p,
+html[data-theme="dark"] .form-card p,
+[data-theme="dark"] .form-card label,
+html[data-theme="dark"] .form-card label{
+  color: var(--gray-500) !important;
+}
+[data-theme="dark"] .form-card .form-control,
+html[data-theme="dark"] .form-card .form-control,
+[data-theme="dark"] .form-card select,
+html[data-theme="dark"] .form-card select,
+[data-theme="dark"] .form-card input,
+html[data-theme="dark"] .form-card input{
+  background:#101827 !important;
+  color:var(--ink) !important;
+  border-color:rgba(142,154,180,.32) !important;
+}
+[data-theme="dark"] .form-card .form-control::placeholder,
+html[data-theme="dark"] .form-card .form-control::placeholder,
+[data-theme="dark"] .form-card input::placeholder,
+html[data-theme="dark"] .form-card input::placeholder{
+  color:#7d88a1 !important;
+}
+[data-theme="dark"] .form-card select option,
+html[data-theme="dark"] .form-card select option{
+  background:#101827;
+  color:var(--ink);
+}
+[data-theme="dark"] .form-card [style*="background:rgba"],
+html[data-theme="dark"] .form-card [style*="background:rgba"]{
+  color: var(--gray-500) !important;
+}

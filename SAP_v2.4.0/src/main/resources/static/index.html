@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>SAP SENAC DF — Sistema de Apoio Psicológico</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,800;1,700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/index.css">
+</head>
+<body>
+
+<!-- TOPNAV -->
+<nav class="topnav">
+  <div class="topnav-brand">
+    <div class="topnav-logo">
+<img class="topnav-senac-svg" src="senasc.png" alt="Logo do Senac em PNG">
+      <div>
+        <div class="topnav-name">SENAC</div>
+        <div class="topnav-sub">Distrito Federal</div>
+      </div>
+    </div>
+    <div class="topnav-divider"></div>
+    <span style="font-size:11px;font-weight:600;color:var(--ink-soft);letter-spacing:.5px">SAP</span>
+  </div>
+  <div class="topnav-links">
+    <a class="topnav-link" href="#sobre">Sobre</a>
+    <a class="topnav-link" href="#como-funciona">Como funciona</a>
+    <button class="btn-theme" onclick="toggleTheme()">
+      <svg id="ico-moon" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+      <svg id="ico-sun" style="display:none" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/></svg>
+    </button>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-bg">
+    <div class="hero-grid"></div>
+    <div class="hero-blob hero-blob-1"></div>
+    <div class="hero-blob hero-blob-2"></div>
+    <div class="hero-blob hero-blob-3"></div>
+  </div>
+  <div class="hero-inner">
+    <div class="hero-logo-wrap">
+<img class="hero-logo-svg" src="senasc.png" alt="Logo do Senac em PNG">
+    </div>
+    <div class="hero-badge"><span class="hero-badge-dot"></span>Sistema de Agendamento do SAP</div>
+    <h1 class="hero-title">Cuidar começa com<em>quem se importa.</em></h1>
+    <p class="hero-title-line2">Plataforma institucional SENAC DF · Serviço Nacional de Aprendizagem Comercial </p>
+    <p class="hero-desc">Instrutores e coordenadores encaminham alunos ao SAP (Serviço de Apoio Psicopedagógico), onde a psicóloga realiza o atendimento e acompanhamento com sigilo, agilidade e cuidado.</p>
+  </div>
+</section>
+
+<!-- CARDS -->
+<section class="cards-section">
+  <p class="cards-label">Acesso por perfil</p>
+  <div class="cards-grid">
+
+
+    <!-- ADMINISTRADOR -->
+    <div class="role-card card-admin">
+      <div class="card-icon-wrap icon-admin">
+        <svg viewBox="0 0 24 24"><path d="M12 3l8 4v5c0 5-3.5 8-8 9-4.5-1-8-4-8-9V7l8-4z"/><path d="M9 12l2 2 4-4"/></svg>
+      </div>
+      <div class="card-kicker">Controle geral</div>
+      <div class="card-name">Administrador</div>
+      <div class="card-desc">Controla acessos, unidades do Senac DF, logins por perfil e mantém cada unidade separada com seus próprios dados.</div>
+      <button class="card-btn btn-navy" onclick="window.location.href='index.html?perfil=administrador'">
+        Acessar painel
+        <svg viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+      </button>
+    </div>
+
+    <!-- PSICÓLOGO -->
+    <div class="role-card card-psico">
+      <div class="card-icon-wrap icon-psico">
+        <svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+      </div>
+      <div class="card-kicker">Atendimento</div>
+      <div class="card-name">Psicólogo(a)</div>
+      <div class="card-desc">Gerencia todas as atendimentos, alunos, solicitações e se comunica com instrutores e coordenação.</div>
+      <button class="card-btn btn-navy" onclick="window.location.href='index.html?perfil=psicologa'">
+        Acessar painel
+        <svg viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+      </button>
+    </div>
+
+    <!-- COORDENAÇÃO -->
+    <div class="role-card card-coord">
+      <div class="card-icon-wrap icon-coord">
+        <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      </div>
+      <div class="card-kicker">Gestão</div>
+      <div class="card-name">Coordenação</div>
+      <div class="card-desc">Cadastra alunos, solicita atendimentos psicológicos e se comunica com a psicóloga pelo chat integrado.</div>
+      <button class="card-btn btn-orange" onclick="window.location.href='index.html?perfil=coordenacao'">
+        Acessar painel
+        <svg viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+      </button>
+    </div>
+
+    <!-- INSTRUTOR -->
+    <div class="role-card card-coord">
+      <div class="card-icon-wrap icon-inst">
+        <svg viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+      </div>
+      <div class="card-kicker">Sala de Aula</div>
+      <div class="card-name">Instrutor</div>
+      <div class="card-desc">Registra alunos de sua turma, encaminha para atendimentos e acompanha o status dos atendimentos.</div>
+      <button class="card-btn btn-orange" onclick="window.location.href='index.html?perfil=instrutor'">
+        Acessar painel
+        <svg viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+      </button>
+    </div>
+
+  </div>
+</section>
+
+<!-- FEATURES -->
+<section class="features" id="sobre">
+  <div class="features-grid">
+    <div class="feat-item">
+      <div class="feat-icon"><svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>
+      <div class="feat-txt"><strong>Acesso seguro por perfil</strong><span>Cada usuário entra com login individual. Sem compartilhamento de credenciais entre áreas.</span></div>
+    </div>
+    <div class="feat-item">
+      <div class="feat-icon"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div>
+      <div class="feat-txt"><strong>Chat integrado</strong><span>Psicóloga, coordenação e instrutores se comunicam em tempo real dentro da plataforma.</span></div>
+    </div>
+    <div class="feat-item">
+      <div class="feat-icon"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div>
+      <div class="feat-txt"><strong>Agenda e calendário</strong><span>Visualize e gerencie atendimentos por mês, semana ou dia. Controle completo de disponibilidade.</span></div>
+    </div>
+    <div class="feat-item">
+      <div class="feat-icon"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg></div>
+      <div class="feat-txt"><strong>Gestão de alunos</strong><span>Cadastro completo, histórico de atendimentos e acompanhamento por curso e unidade.</span></div>
+    </div>
+    <div class="feat-item">
+      <div class="feat-icon"><svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg></div>
+      <div class="feat-txt"><strong>Unidades personalizáveis</strong><span>Cadastre somente as unidades reais da instituição. O sistema não vem com dados de exemplo.</span></div>
+    </div>
+    <div class="feat-item">
+      <div class="feat-icon"><svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div>
+      <div class="feat-txt"><strong>Indicadores em tempo real</strong><span>Dashboard com estatísticas de solicitações, atendimentos realizadas e alunos ativos.</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section class="section" id="como-funciona" style="padding-bottom:80px">
+  <h2 class="section-title">Como funciona</h2>
+  <p class="section-sub">Em apenas três passos simples, o aluno recebe o suporte psicológico que precisa.</p>
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-top:16px">
+    <div style="text-align:center;padding:28px 20px;background:var(--surface);border:1px solid var(--border);border-radius:20px">
+      <div style="width:48px;height:48px;border-radius:50%;background:var(--navy);color:#fff;font-family:var(--font);font-size:22px;font-weight:800;display:flex;align-items:center;justify-content:center;margin:0 auto 16px" class="step-num">1</div>
+      <strong style="display:block;font-size:14px;font-weight:700;color:var(--ink);margin-bottom:6px">Solicitação</strong>
+      <span style="font-size:13px;color:var(--ink-soft);line-height:1.7">Instrutor ou coordenador solicita atendimento para o aluno na plataforma.</span>
+    </div>
+    <div style="text-align:center;padding:28px 20px;background:var(--surface);border:1px solid var(--border);border-radius:20px">
+      <div style="width:48px;height:48px;border-radius:50%;background:var(--orange);color:#fff;font-family:var(--font);font-size:22px;font-weight:800;display:flex;align-items:center;justify-content:center;margin:0 auto 16px" class="step-num">2</div>
+      <strong style="display:block;font-size:14px;font-weight:700;color:var(--ink);margin-bottom:6px">Agendamento</strong>
+      <span style="font-size:13px;color:var(--ink-soft);line-height:1.7">A psicóloga confirma a atendimento, define data e horário adequados ao turno do aluno.</span>
+    </div>
+    <div style="text-align:center;padding:28px 20px;background:var(--surface);border:1px solid var(--border);border-radius:20px">
+      <div style="width:48px;height:48px;border-radius:50%;background:var(--navy-mid);color:#fff;font-family:var(--font);font-size:22px;font-weight:800;display:flex;align-items:center;justify-content:center;margin:0 auto 16px" class="step-num">3</div>
+      <strong style="display:block;font-size:14px;font-weight:700;color:var(--ink);margin-bottom:6px">Acompanhamento</strong>
+      <span style="font-size:13px;color:var(--ink-soft);line-height:1.7">Instrutor e coordenação acompanham o status e a psicóloga registra as observações.</span>
+    </div>
+  </div>
+</section>
+
+<footer class="foot">© 2026 SENAC CEP · Taguatinga · Turma - 2025.08.179 - Instrutora Rayssa Paiva - Alunos: Carla, Kauã e João</footer>
+
+<!-- SELEÇÃO DE PERFIL (modal overlay igual ao original) -->
+<div id="modal-perfil" style="display:none;position:fixed;inset:0;z-index:200;background:rgba(10,10,8,.55);backdrop-filter:blur(6px);align-items:center;justify-content:center">
+  <div style="background:var(--surface);border-radius:24px;padding:40px;max-width:480px;width:90%;border:1px solid var(--border);box-shadow:0 24px 80px rgba(0,0,0,.18)">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px">
+      <div style="display:flex;align-items:center;gap:12px">
+        <img src="senasc.png" alt="Logo SENAC" style="height:42px;width:auto;object-fit:contain;flex-shrink:0;">
+        <h2 style="font-family:var(--serif);font-size:24px;font-weight:700;color:var(--navy)" id="modal-title">Acessar Painel</h2>
+      </div>
+      <button onclick="fecharModal()" style="background:none;border:none;cursor:pointer;color:var(--ink-soft);width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <!-- Conteúdo do login é injetado via JS -->
+    <div id="modal-body"></div>
+  </div>
+</div>
+
+<script src="js/app.js"></script>
+<script src="js/index.js"></script>
+</body>
+</html>

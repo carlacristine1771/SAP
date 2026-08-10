@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>Painel Instrutor — SAP SENAC CEP</title>
+  <link rel="stylesheet" href="../css/global.css">
+  <link rel="stylesheet" href="../css/painel.css">
+  <link rel="stylesheet" href="../css/painel-instrutor.css">
+</head>
+<body>
+<div class="app-shell">
+
+  <aside class="sidebar sidebar-pastel" id="sidebar">
+    <div class="sidebar-brand">
+      <div class="sidebar-brand-top">
+        <img src="../assets/img/senac-logo.png" class="senac-logo-img" alt="SENAC" onerror="this.style.display='none'">
+        <div class="sidebar-senac-text">
+          <div class="sidebar-senac-name">SENAC</div>
+          <div class="sidebar-senac-sub">DF</div>
+        </div>
+      </div>
+      <div class="sidebar-tagline">Instrutores</div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section">Menu</div>
+      <div class="nav-link active" data-panel="panel-home" onclick="navTo('panel-home',this)">
+        <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></span>
+        <span class="nav-label">Início</span>
+      </div>
+      <div class="nav-link" data-panel="panel-alunos" onclick="navTo('panel-alunos',this)">
+        <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg></span>
+        <span class="nav-label">Alunos</span>
+      </div>
+      <div class="nav-link" data-panel="panel-encaminhar" onclick="navTo('panel-encaminhar',this)">
+        <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></span>
+        <span class="nav-label">Encaminhar Aluno</span>
+      </div>
+      <div class="nav-link" data-panel="panel-atendimentos" onclick="navTo('panel-atendimentos',this)">
+        <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1"/></svg></span>
+        <span class="nav-label">Atendimentos</span>
+      </div>
+      <div class="nav-link" data-panel="panel-chat" onclick="navTo('panel-chat',this)">
+        <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></span>
+        <span class="nav-label">Chat</span>
+      </div>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="sidebar-user">
+        <div class="user-avatar" id="sb-avatar">I</div>
+        <div class="user-details">
+          <div class="user-name" id="sb-nome">Coordenação</div>
+          <div class="user-role" id="sb-setor">—</div>
+        </div>
+        <button class="btn-logout" onclick="logout()" title="Sair">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        </button>
+      </div>
+    </div>
+  </aside>
+
+  <div class="main-wrap">
+    <header class="topbar">
+      <div class="topbar-left">
+        <div class="topbar-page-title" id="topbar-title">Início</div>
+        <div class="topbar-breadcrumb">SAP · Instrutor</div>
+      </div>
+      <div class="topbar-right">
+        <button class="btn-theme" onclick="sapToggleTheme()" title="Alternar tema">
+          <svg class="ico-moon" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+          <svg class="ico-sun" style="display:none" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/></svg>
+        </button>
+        <button class="btn btn-outline btn-sm" onclick="navTo('panel-alunos',document.querySelector('[data-panel=panel-alunos]')); openModal('modal-cad');">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>
+          Novo Aluno
+        </button>
+        <button class="btn btn-orange btn-sm" onclick="navTo('panel-encaminhar',document.querySelector('[data-panel=panel-encaminhar]'))">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Encaminhar
+        </button>
+      </div>
+    </header>
+
+    <div class="page-body">
+
+      <!-- HOME -->
+      <div id="panel-home" class="panel-section active fade-up">
+        <div class="welcome-banner">
+          <div class="wb-content">
+            <div class="wb-tag"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>Bem-vindo(a)</div>
+            <h2 class="wb-title" id="wb-nome">Coordenação</h2>
+            <p class="wb-sub" id="wb-setor">SENAC CEP</p>
+          </div>
+          <div class="wb-actions">
+            <button class="btn btn-outline" onclick="navTo('panel-alunos',document.querySelector('[data-panel=panel-alunos]')); openModal('modal-cad');">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>Novo Aluno
+            </button>
+            <button class="btn btn-orange" onclick="navTo('panel-encaminhar',document.querySelector('[data-panel=panel-encaminhar]'))">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>Nova Solicitação
+            </button>
+          </div>
+        </div>
+        <div class="stats-grid">
+          <div class="stat-card accent-orange"><div class="stat-icon-wrap bg-orange"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg></div><div class="stat-value" id="st-alunos">0</div><div class="stat-label">Alunos cadastrados</div></div>
+          <div class="stat-card accent-wait"><div class="stat-icon-wrap bg-wait"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div><div class="stat-value" id="st-agt">0</div><div class="stat-label">Aguardando</div></div>
+          <div class="stat-card accent-ok"><div class="stat-icon-wrap bg-ok"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg></div><div class="stat-value" id="st-conf">0</div><div class="stat-label">Confirmadas</div></div>
+          <div class="stat-card accent-done"><div class="stat-icon-wrap bg-done"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><polyline points="20 6 9 17 4 12"/></svg></div><div class="stat-value" id="st-real">0</div><div class="stat-label">Realizadas</div></div>
+        </div>
+        <!-- GRÁFICOS -->
+        <div class="dash-alunos-grid">
+          <div class="data-table-wrap">
+            <div class="data-table-head"><div class="data-table-title">Distribuição por Curso</div></div>
+            <div class="chart-pizza-wrap">
+              <div class="chart-pizza-visual">
+                <canvas id="chart-pizza" width="300" height="300" class="chart-pizza-canvas"></canvas>
+                <div id="chart-pizza-tooltip" class="chart-pizza-tooltip"></div>
+              </div>
+              <div class="chart-pizza-side">
+                <div id="chart-pizza-summary" class="chart-pizza-summary"></div>
+                <div id="chart-pizza-legend" class="chart-pizza-legend"></div>
+              </div>
+            </div>
+          </div>
+          <div class="data-table-wrap">
+            <div class="data-table-head"><div class="data-table-title">Resumo dos Alunos</div></div>
+            <div class="dash-resumo-grid" id="dash-resumo"></div>
+          </div>
+          <div class="data-table-wrap">
+            <div class="data-table-head"><div class="data-table-title">Turmas com Mais Alunos</div></div>
+            <div class="dash-list" id="dash-turmas"></div>
+          </div>
+          <div class="data-table-wrap">
+            <div class="data-table-head"><div class="data-table-title">Cadastros Recentes</div></div>
+            <div class="dash-list" id="dash-recentes-alunos"></div>
+          </div>
+        </div>
+        <div class="data-table-wrap" style="margin-top:20px">
+          <div class="data-table-head"><div class="data-table-title">Últimos Solicitações</div></div>
+          <div id="home-recentes"></div>
+        </div>
+      </div>
+
+      <!-- ALUNOS -->
+      <div id="panel-alunos" class="panel-section fade-up">
+        <div class="data-table-wrap">
+          <div class="data-table-head">
+            <div class="data-table-title">Alunos Cadastrados</div>
+            <button class="btn btn-orange btn-sm" onclick="openModal('modal-cad')">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Cadastrar Aluno
+            </button>
+          </div>
+          <div class="data-table-filters">
+            <div class="search-box"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><input type="text" id="busca-al" placeholder="Buscar aluno..." oninput="renderAlunos()"></div>
+          </div>
+          <table><thead><tr><th>Aluno</th><th>Matrícula</th><th>Curso / Turma</th><th>Perfil</th><th>Cadastrado por</th><th>Atendimentos</th><th>Ações</th></tr></thead>
+          <tbody id="tbody-alunos"><tr><td colspan="7" style="text-align:center;padding:36px;color:var(--gray-400)">Carregando...</td></tr></tbody></table>
+        </div>
+      </div>
+
+      <!-- ENCAMINHAR -->
+      <div id="panel-encaminhar" class="panel-section fade-up">
+        <div class="form-card">
+          <h2 style="font-family:var(--font-display);font-size:22px;font-weight:700;color:var(--senac-navy);margin-bottom:6px">Nova Solicitação</h2>
+          <p style="font-size:13.5px;color:var(--gray-500);margin-bottom:24px">Preencha para solicitar atendimento psicológico para o aluno.</p>
+          <div id="enc-err" class="err-msg"></div>
+          <div style="display:grid;gap:20px">
+            <div><label class="form-label">Aluno <span style="color:var(--s-cancel)">*</span></label><select class="form-control" id="enc-aluno" onchange="atualizarCompatibilidade()"><option value="">Selecione o aluno...</option></select><div id="enc-hint" style="margin-top:8px;font-size:12px;color:var(--gray-500)">Selecione um aluno para ver os horários compatíveis.</div></div>
+            <div><label class="form-label">Motivo da Solicitação <span style="color:var(--s-cancel)">*</span></label><textarea class="form-control" id="enc-motivo" rows="3" placeholder="Descreva o motivo, comportamentos observados e contexto..." style="resize:vertical"></textarea></div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+              <div><label class="form-label">Data Preferencial</label><input type="date" class="form-control" id="enc-data"></div>
+              <div><label class="form-label">Turno da Atendimento <span style="color:var(--s-cancel)">*</span></label><select class="form-control" id="enc-turno" onchange="atualizarCompatibilidade()"><option value="">Selecione...</option><option value="manhã">Manhã</option><option value="tarde">Tarde</option><option value="noite">Noite</option></select></div>
+            </div>
+            <div>
+              <label class="form-label">Tipo de Atendimento <span style="color:var(--s-cancel)">*</span></label>
+              <select class="form-control" id="enc-tipo" onchange="atualizarCompatibilidade()">
+                <option value="">Selecione o tipo...</option>
+                <option value="dentro">Dentro do horário do curso</option>
+                <option value="fora">Fora do horário do curso</option>
+                <option value="remoto">Atendimento Remoto</option>
+              </select>
+            </div>
+            <div><label class="form-label">Horário Preferencial</label><input type="time" class="form-control" id="enc-hora" oninput="atualizarCompatibilidade()" onchange="atualizarCompatibilidade()"><div id="enc-hora-hint" style="margin-top:8px;font-size:12px;color:var(--gray-500)">O horário deve ser no mesmo turno do curso do aluno.</div></div>
+            <div><label class="form-label">Observações</label><textarea class="form-control" id="enc-obs" rows="2" placeholder="Informações complementares para a psicóloga..." style="resize:vertical"></textarea></div>
+            <button class="btn btn-orange btn-full" onclick="submitEnc()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>Enviar Solicitação
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ATENDIMENTOS -->
+      <div id="panel-atendimentos" class="panel-section fade-up">
+        <div class="data-table-wrap">
+          <div class="data-table-head">
+            <div class="data-table-title">Atendimentos Encaminhadas</div>
+            <div class="data-table-filters">
+              <div class="search-box"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><input type="text" id="busca-cons" placeholder="Buscar..." oninput="renderAtendimentos()"></div>
+              <select class="filter-select" id="filtro-st" onchange="renderAtendimentos()"><option value="">Todos</option><option value="aguardando">Aguardando</option><option value="confirmada">Confirmadas</option><option value="realizada">Realizadas</option><option value="cancelada">Canceladas</option><option value="falta">Falta</option></select>
+              <button class="btn btn-orange btn-sm" onclick="abrirModalAgendar(null)">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:14px;height:14px"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                Agendar
+              </button>
+            </div>
+          </div>
+          <table><thead><tr><th>Aluno</th><th>Motivo</th><th>Turno</th><th>Agendado por</th><th>Status</th><th>Data</th></tr></thead>
+          <tbody id="tbody-cons"><tr><td colspan="6" style="text-align:center;padding:36px;color:var(--gray-400)">Carregando...</td></tr></tbody></table>
+        </div>
+      </div>
+
+
+      <!-- CHAT -->
+      <div id="panel-chat" class="panel-section fade-up">
+        <div class="chat-wrap-enhanced">
+          <aside class="chat-sidebar-panel">
+            <div class="chat-sidebar-head">
+              <div><strong>Conversas</strong><small>Usuários do sistema</small></div>
+              <button type="button" class="btn btn-orange btn-sm chat-new-btn" onclick="abrirNovoChat()">+ Nova</button>
+            </div>
+            <div class="chat-tabs chat-contact-list" id="chat-tabs"></div>
+          </aside>
+          <section class="chat-main-panel">
+            <div class="chat-current-header" id="chat-current-header">
+              <div class="chat-current-avatar">?</div>
+              <div class="chat-current-info"><strong>Selecione uma conversa</strong><small>Escolha um contato na lateral</small></div>
+            </div>
+            <div class="chat-body" id="chat-body"><div class="chat-empty-msg">Selecione uma conversa na lateral.</div></div>
+            <div class="chat-input-row">
+              <textarea class="chat-textarea" id="chat-txt" rows="1" placeholder="Digite sua mensagem..." disabled></textarea>
+              <button class="chat-send-btn" id="chat-send-btn" onclick="enviarMsgGlobal()" disabled>
+                <svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+              </button>
+            </div>
+          </section>
+        </div>
+      </div>
+
+
+    </div>
+  </div>
+</div>
+
+<!-- MODAL CADASTRO ALUNO -->
+<div class="modal-overlay" id="modal-cad">
+  <div class="modal-box" style="max-width:560px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+      <h3 style="font-family:var(--font-display);font-size:20px;font-weight:700;color:var(--senac-navy)">Cadastrar Aluno</h3>
+      <button onclick="closeModal('modal-cad')" style="background:none;border:none;cursor:pointer;color:var(--gray-400)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>
+    <div id="cad-err" class="err-msg"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+      <div style="grid-column:1/-1"><label class="form-label">Nome completo *</label><input type="text" class="form-control" id="cad-nome" placeholder="Nome completo"></div>
+      <div><label class="form-label">Matrícula *</label><input type="text" class="form-control" id="cad-mat" placeholder="20240010"></div>
+      <div><label class="form-label">CPF *</label><input type="text" class="form-control" id="cad-cpf" placeholder="000.000.000-00" oninput="mCPF(this)" maxlength="14"></div>
+      <div><label class="form-label">Nascimento *</label><input type="date" class="form-control" id="cad-nasc"></div>
+      <div><label class="form-label">Telefone *</label><input type="text" class="form-control" id="cad-tel" placeholder="(11) 99999-9999" oninput="mTel(this)" maxlength="15"></div>
+      <div><label class="form-label">Curso *</label>
+        <select class="form-control" id="cad-curso" onchange="popularTurmasAlunoCadastro()"><option value="">Selecione um curso cadastrado...</option></select></div>
+      <div><label class="form-label">Turma *</label><select class="form-control" id="cad-turma" onchange="atualizarTurnoAlunoPelaTurma()"><option value="">Selecione uma turma cadastrada...</option></select></div>
+      <div><label class="form-label">Turno do curso *</label><select class="form-control" id="cad-turno"><option value="">Selecione...</option><option value="manhã">Manhã</option><option value="tarde">Tarde</option><option value="noite">Noite</option></select></div>
+      <div><label class="form-label">Aluno é PCD? *</label><select class="form-control" id="cad-pcd"><option value="nao">Não</option><option value="sim">Sim</option></select></div>
+      <div style="grid-column:1/-1"><label class="form-label">E-mail</label><input type="email" class="form-control" id="cad-email" placeholder="email@exemplo.com"></div>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:20px">
+      <button class="btn btn-outline" onclick="closeModal('modal-cad')" style="flex:1">Cancelar</button>
+      <button class="btn btn-orange" onclick="salvarAluno()" style="flex:2">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>Cadastrar Aluno
+      </button>
+    </div>
+  </div>
+</div>
+
+
+<!-- MODAL AGENDAMENTO (Instrutor/Coord) -->
+<div class="modal-overlay" id="modal-agendar">
+  <div class="modal-box" style="max-width:520px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+      <h3 style="font-family:var(--font-display);font-size:20px;font-weight:700;color:var(--senac-navy)">Novo Agendamento</h3>
+      <button onclick="closeModal('modal-agendar')" style="background:none;border:none;cursor:pointer;color:var(--gray-400)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>
+    <div id="mag-aluno-info" style="display:none;background:var(--gray-50);border-radius:var(--r-sm);padding:12px 14px;margin-bottom:14px">
+      <div style="font-size:13px;font-weight:700;color:var(--senac-navy)" id="mag-aluno-nome"></div>
+      <div style="font-size:12px;color:var(--gray-500)" id="mag-aluno-detalhe"></div>
+    </div>
+    <div style="margin-bottom:14px" id="mag-select-wrap">
+      <label class="form-label">Selecionar Aluno</label>
+      <select class="form-control" id="mag-aluno-sel" onchange="magSelecionarAluno()">
+        <option value="">Selecione o aluno...</option>
+      </select>
+    </div>
+    <div style="margin-bottom:14px">
+      <label class="form-label">Tipo de Atendimento</label>
+      <select class="form-control" id="mag-tipo" onchange="magAtualizarTipo()">
+        <option value="">Selecione o tipo...</option>
+        <option value="dentro">Dentro do horário do curso</option>
+        <option value="fora">Fora do horário do curso</option>
+        <option value="remoto">Atendimento Remoto</option>
+      </select>
+      <div id="mag-tipo-info" style="display:none;margin-top:8px;border-radius:var(--r-sm);padding:9px 13px;font-size:12.5px"></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:18px">
+      <div><label class="form-label">Data da Sessão</label><input type="date" class="form-control" id="mag-data"></div>
+      <div><label class="form-label">Turno</label>
+        <select class="form-control" id="mag-turno" onchange="magAtualizarTipo()">
+          <option value="">Selecione...</option>
+          <option value="manhã">Manhã</option>
+          <option value="tarde">Tarde</option>
+          <option value="noite">Noite</option>
+        </select>
+      </div>
+      <div><label class="form-label">Horário</label><input type="time" class="form-control" id="mag-hora"></div>
+    </div>
+    <div style="margin-bottom:14px">
+      <label class="form-label">Motivo / Observação</label>
+      <textarea class="form-control" id="mag-motivo" rows="3" placeholder="Descreva o motivo do atendimento..." style="resize:vertical"></textarea>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:20px">
+      <button class="btn btn-outline" onclick="closeModal('modal-agendar')" style="flex:1">Cancelar</button>
+      <button class="btn btn-orange" onclick="confirmarNovoAgendamento()" style="flex:2">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        Agendar Sessão
+      </button>
+    </div>
+  </div>
+</div>
+
+
+<div class="modal-overlay" id="modal-novo-chat">
+  <div class="modal-box" style="max-width:620px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px">
+      <div>
+        <h3 style="font-family:var(--font-display);font-size:20px;font-weight:700;color:var(--senac-navy);margin:0">Nova conversa</h3>
+        <p style="font-size:13px;color:var(--gray-500);margin:4px 0 0">Escolha um usuário para iniciar o chat.</p>
+      </div>
+      <button onclick="closeModal('modal-novo-chat')" style="background:none;border:none;cursor:pointer;color:var(--gray-400)">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <input class="form-control" id="chat-user-search" placeholder="Buscar usuário pelo nome, login ou função..." oninput="renderNovoChatUsuarios()" style="margin-bottom:12px">
+    <div id="chat-user-list" class="chat-user-list"></div>
+  </div>
+</div>
+
+<div id="toast-container"></div>
+<script src="../js/app.js"></script>
+<script src="../js/theme-chat.js"></script>
+<script src="../js/painel-instrutor.js"></script>
+<script src="../js/sap-chat-global.js"></script>
+</body>
+</html>
