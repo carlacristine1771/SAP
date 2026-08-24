@@ -31,8 +31,8 @@ dependencies {
 	// VALIDATION
 	implementation 'org.springframework.boot:spring-boot-starter-validation'
 
-	// MYSQL
-	runtimeOnly 'com.mysql:mysql-connector-j'
+	// PostgreSQL
+	runtimeOnly 'org.postgresql:postgresql'
 
 	// LOMBOK
 	compileOnly 'org.projectlombok:lombok'
