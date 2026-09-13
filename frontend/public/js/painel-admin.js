@@ -1,7 +1,7 @@
 'use strict';
 initStore();
 var _sess = getSession();
-if (!_sess || _sess.role !== 'administrador') { clearSession(); window.location.href = "../index.html"; }
+if (!_sess || _sess.role !== 'administrador') { clearSession(); window.location.href = "/"; }
 
 document.getElementById('sb-nome').textContent   = _sess.nome || 'Admin';
 document.getElementById('sb-avatar').textContent = (_sess.nome||'A').charAt(0);

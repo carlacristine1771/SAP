@@ -1440,4 +1440,8 @@ button, .btn, .form-control, input, select, textarea { max-width: 100%; }
   .indicativos-total{ width:100% !important; }
   .btn, .btn-sm{ width:100%; justify-content:center; }
   .btn-theme{ width:42px !important; }
+  .panel-section div[style*="grid-template-columns"],
+  .modal-box div[style*="grid-template-columns"]{
+    grid-template-columns:1fr !important;
+  }
 }

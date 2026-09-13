@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>Painel Psicólogo(a) — SAP SENAC CEP</title>
+  <link rel="stylesheet" href="../css/global.css">
+  <link rel="stylesheet" href="../css/painel.css">
+  <link rel="stylesheet" href="../css/painel-psicologo.css">
+  
+</head>
+<body>
+<div class="app-shell">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar sidebar-pastel" id="sidebar">
+    <div class="sidebar-brand">
+      <div class="sidebar-brand-top">
+        <img src="../senasc.png" class="senac-logo-img" alt="SENAC" onerror="this.style.display='none'">
+        <div class="sidebar-senac-text">
+          <div class="sidebar-senac-name">SENAC</div>
+          <div class="sidebar-senac-sub">CEP</div>
+        </div>
+      </div>
+      <div class="sidebar-tagline">Área do Psicólogo(a)</div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section">Menu</div>
+      <div class="nav-link active" data-panel="panel-dashboard" onclick="navTo('panel-dashboard',this)">
+        <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg></span>
+        <span class="nav-label">Dashboard</span>
+      </div>
+      <div class="nav-link" data-panel="panel-indicativos" onclick="navTo('panel-indicativos',this)">
+        <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 19V5"/><path d="M4 19h16"/><rect x="7" y="11" width="3" height="5" rx="1"/><rect x="12" y="7" width="3" height="9" rx="1"/><rect x="17" y="9" width="3" height="7" rx="1"/></svg></span>
+        <span class="nav-label">Indicativos</span>
+      </div>
+      <div class="nav-link" data-panel="panel-historico" onclick="navTo('panel-historico',this)">
+        <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><path d="M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01"/></svg></span>
+        <span class="nav-label">Histórico</span>
+      </div>
+      <div class="nav-link" data-panel="panel-atendimentos" onclick="navTo('panel-atendimentos',this)">
+        <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1"/></svg></span>
+        <span class="nav-label">Atendimentos</span>
+        <span class="nav-badge" id="badge-agt" style="display:none">0</span>
+      </div>
+      <div class="nav-link" data-panel="panel-aprovacoes" onclick="navTo('panel-aprovacoes',this)" style="display:none">
+        <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></span>
+        <span class="nav-label">Aprovações</span>
+        <span class="nav-badge hidden" id="badge-pend">0</span>
+      </div>
+      <div class="nav-link" data-panel="panel-alunos" onclick="navTo('panel-alunos',this)">
+        <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg></span>
+        <span class="nav-label">Alunos</span>
+      </div>
+      <div class="nav-link" data-panel="panel-calendario" onclick="navTo('panel-calendario',this)">
+        <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></span>
+        <span class="nav-label">Calendário</span>
+      </div>
+      <div class="nav-link" data-panel="panel-chat" onclick="navTo('panel-chat',this)">
+        <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></span>
+        <span class="nav-label">Chat</span>
+      </div>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="sidebar-user">
+        <div class="user-avatar" id="sb-avatar">P</div>
+        <div class="user-details">
+          <div class="user-name" id="sb-nome">Psicóloga</div>
+          <div class="user-role">Psicólogo(a)</div>
+        </div>
+        <button class="btn-logout" onclick="logout()" title="Sair">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        </button>
+      </div>
+    </div>
+  </aside>
+
+  <div class="main-wrap">
+    <header class="topbar">
+      <div class="topbar-left">
+        <div class="topbar-page-title" id="topbar-title">Dashboard</div>
+        <div class="topbar-breadcrumb" id="topbar-unidade">SAP · Psicólogo(a)</div>
+      </div>
+      <div class="topbar-right">
+        <button class="btn-theme" onclick="sapToggleTheme()" title="Alternar tema">
+          <svg class="ico-moon" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+          <svg class="ico-sun" style="display:none" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/></svg>
+        </button>
+      </div>
+    </header>
+
+    <div class="page-body">
+
+      <!-- DASHBOARD -->
+      <div id="panel-dashboard" class="panel-section active fade-up">
+        <div class="welcome-banner">
+          <div class="wb-content">
+            <div class="wb-tag"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>Psicólogo(a)</div>
+            <h2 class="wb-title" id="wb-nome">Olá!</h2>
+            <p class="wb-sub" id="wb-unidade-sub">Gerencie todas as atendimentos e comunicações.</p>
+          </div>
+          <div class="wb-actions">
+            <button class="btn btn-outline" onclick="setDashView('geral',this)" id="ds-btn-geral" style="border-color:rgba(255,255,255,.4);color:#fff">Geral</button>
+            <button class="btn btn-orange" onclick="setDashView('mensal',this)" id="ds-btn-mensal">Este Mês</button>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
+          <span id="ds-periodo-label" style="font-size:12px;color:var(--gray-400);font-weight:600"></span>
+        </div>
+        <div class="stats-grid">
+          <div class="stat-card accent-wait"><div class="stat-icon-wrap bg-wait"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div><div class="stat-value" id="ds-agt">0</div><div class="stat-label">Aguardando</div></div>
+          <div class="stat-card accent-ok"><div class="stat-icon-wrap bg-ok"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg></div><div class="stat-value" id="ds-conf">0</div><div class="stat-label">Confirmadas</div></div>
+          <div class="stat-card accent-done"><div class="stat-icon-wrap bg-done"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><polyline points="20 6 9 17 4 12"/></svg></div><div class="stat-value" id="ds-real">0</div><div class="stat-label">Realizadas</div></div>
+          <div class="stat-card accent-navy"><div class="stat-icon-wrap bg-navy"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg></div><div class="stat-value" id="ds-pac">0</div><div class="stat-label">Alunos Ativos</div></div>
+        </div>
+        <div class="data-table-wrap" style="margin-top:20px">
+          <div class="data-table-head"><div class="data-table-title" id="ds-recentes-titulo">Solicitações Recentes</div></div>
+          <div id="ds-recentes"></div>
+        </div>
+      </div>
+
+      <!-- INDICATIVOS -->
+      <div id="panel-indicativos" class="panel-section fade-up">
+        <div class="indicativos-hero">
+          <div>
+            <div class="indicativos-kicker">Painel analítico</div>
+            <h2 id="ind-title">Indicativos da Psicologia</h2>
+            <p id="ind-subtitle">Visualize os dados por ano e mês, sem misturar períodos antigos com o ano atual.</p>
+          </div>
+          <div class="indicativos-total">
+            <span id="ind-total-alunos">0</span>
+            <small id="ind-total-label">alunos atendidos</small>
+          </div>
+        </div>
+
+        <div class="periodo-filtros-card">
+          <div class="periodo-filtros-texto">
+            <strong>Período dos indicativos</strong>
+            <span id="ind-periodo-label">Ano atual · Todos os meses</span>
+          </div>
+          <div class="periodo-filtros-campos">
+            <label>Ano
+              <select id="ind-filtro-ano" class="filter-select" onchange="alterarPeriodoIndicativos()"></select>
+            </label>
+            <label>Mês
+              <select id="ind-filtro-mes" class="filter-select" onchange="alterarPeriodoIndicativos()"></select>
+            </label>
+          </div>
+        </div>
+
+        <div class="indicativos-info-card">
+          <strong>Como os filtros funcionam</strong>
+          <span>O ano atualiza todos os indicadores. O mês atualiza apenas a movimentação dos atendimentos e o gráfico Tipos de Atendimento.</span>
+        </div>
+
+        <div class="indicativos-movimento-grid">
+          <div class="movimento-card"><span>Total no período</span><strong id="ind-mov-total">0</strong></div>
+          <div class="movimento-card"><span>Realizados</span><strong id="ind-mov-realizados">0</strong></div>
+          <div class="movimento-card"><span>Em aberto</span><strong id="ind-mov-pendentes">0</strong></div>
+          <div class="movimento-card"><span>Não compareceu</span><strong id="ind-mov-faltas">0</strong></div>
+          <div class="movimento-card"><span>Cancelados</span><strong id="ind-mov-cancelados">0</strong></div>
+        </div>
+
+        <div class="dashboard-charts-grid indicativos-main-grid">
+          <div class="data-table-wrap">
+            <div class="data-table-head"><div class="data-table-title">Distribuição por Curso</div></div>
+            <div class="chart-pizza-wrap">
+              <div class="chart-pizza-visual">
+                <canvas id="chart-pizza" width="300" height="300" class="chart-pizza-canvas"></canvas>
+                <div id="chart-pizza-tooltip" class="chart-pizza-tooltip"></div>
+              </div>
+              <div class="chart-pizza-side">
+                <div id="chart-pizza-summary" class="chart-pizza-summary"></div>
+                <div id="chart-pizza-legend" class="chart-pizza-legend"></div>
+              </div>
+            </div>
+          </div>
+          <div class="data-table-wrap">
+            <div class="data-table-head"><div class="data-table-title">Tipo de Curso</div></div>
+            <div class="chart-pizza-wrap chart-pizza-wrap-compact">
+              <div class="chart-pizza-visual">
+                <canvas id="chart-tipo-curso" width="280" height="280" class="chart-pizza-canvas"></canvas>
+                <div id="chart-tipo-curso-tooltip" class="chart-pizza-tooltip"></div>
+              </div>
+              <div class="chart-pizza-side">
+                <div id="chart-tipo-curso-summary" class="chart-pizza-summary"></div>
+                <div id="chart-tipo-curso-legend" class="chart-pizza-legend"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="indicativos-grid indicativos-grid-reorganizada">
+          <div class="data-table-wrap">
+            <div class="data-table-head"><div class="data-table-title">Alunos PCD</div></div>
+            <div class="chart-pizza-wrap chart-pizza-wrap-compact">
+              <div class="chart-pizza-visual">
+                <canvas id="chart-pcd" width="260" height="260" class="chart-pizza-canvas"></canvas>
+                <div id="chart-pcd-tooltip" class="chart-pizza-tooltip"></div>
+              </div>
+              <div class="chart-pizza-side">
+                <div id="chart-pcd-summary" class="chart-pizza-summary"></div>
+                <div id="chart-pcd-legend" class="chart-pizza-legend"></div>
+              </div>
+            </div>
+          </div>
+          <div class="data-table-wrap indicativo-faixa-etaria-card">
+            <div class="data-table-head"><div class="data-table-title">Faixa etária dos alunos</div></div>
+            <div class="indicativo-chart-box indicativo-faixa-etaria-box"><canvas id="chart-linha" width="100%" height="360" style="width:100%;height:360px"></canvas></div>
+          </div>
+          <div class="data-table-wrap indicativo-turnos-card">
+            <div class="data-table-head"><div class="data-table-title">Turno do Curso</div></div>
+            <div class="indicativo-chart-box indicativo-turnos-box"><canvas id="chart-turnos" width="100%" height="190" style="width:100%;height:190px"></canvas></div>
+          </div>
+          <div class="data-table-wrap indicativo-tipos-card">
+            <div class="data-table-head"><div class="data-table-title">Tipos de Atendimento</div></div>
+            <div class="chart-pizza-wrap chart-pizza-wrap-compact chart-pizza-wrap-tipos">
+              <div class="chart-pizza-visual">
+                <canvas id="chart-tipos" width="280" height="280" class="chart-pizza-canvas"></canvas>
+                <div id="chart-tipos-tooltip" class="chart-pizza-tooltip"></div>
+              </div>
+              <div class="chart-pizza-side">
+                <div id="chart-tipos-summary" class="chart-pizza-summary"></div>
+                <div id="chart-tipos-legend" class="chart-pizza-legend"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- HISTÓRICO -->
+      <div id="panel-historico" class="panel-section fade-up">
+        <div class="historico-hero">
+          <div>
+            <div class="indicativos-kicker">Histórico anual</div>
+            <h2>Indicadores por Ano</h2>
+            <p>Escolha um ano para abrir os mesmos gráficos da aba Indicativos. Só aparecem anos que possuem atendimentos registrados no banco.</p>
+          </div>
+        </div>
+        <div id="historico-anos-grid" class="historico-anos-grid"></div>
+      </div>
+
+      <!-- ATENDIMENTOS -->
+      <div id="panel-atendimentos" class="panel-section fade-up">
+        <div class="data-table-wrap">
+          <div class="data-table-head">
+            <div class="data-table-title">Gerenciar Atendimentos</div>
+            <div class="data-table-filters">
+              <button class="btn btn-orange btn-sm" onclick="abrirModalAgendar(null)" title="Criar atendimento diretamente pela psicóloga">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:14px;height:14px"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                Novo Atendimento
+              </button>
+              <div class="search-box"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><input type="text" id="busca-c" placeholder="Buscar aluno..." oninput="renderAtendimentos()"></div>
+              <select class="filter-select" id="filtro-status" onchange="renderAtendimentos()">
+                <option value="">Todos os status</option>
+                <option value="aguardando">Aguardando</option>
+                <option value="confirmada">Confirmadas</option>
+                <option value="realizada">Realizadas</option>
+                <option value="cancelada">Canceladas</option>
+                <option value="falta">Não compareceu</option>
+              </select>
+            </div>
+          </div>
+          <table><thead><tr><th>Aluno</th><th>Motivo</th><th>Turno / Data</th><th>Solicitado por</th><th>Profissional responsável</th><th>Status</th><th>Ações</th></tr></thead>
+          <tbody id="tbody-atendimentos"><tr><td colspan="7" style="text-align:center;padding:36px;color:var(--gray-400)">Carregando...</td></tr></tbody></table>
+        </div>
+      </div>
+
+      <!-- ALUNOS -->
+      <div id="panel-alunos" class="panel-section fade-up">
+        <div class="data-table-wrap">
+          <div class="data-table-head">
+            <div class="data-table-title">Tabela de Alunos</div>
+            <div class="data-table-filters">
+              <div class="search-box"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><input type="text" id="busca-pac" placeholder="Buscar aluno..." oninput="renderAlunos()"></div>
+            </div>
+          </div>
+          <div class="alunos-toolbar">
+            <div class="tab-group">
+              <button class="tab-btn active" onclick="setTabPac('todos',this)">Todos <span id="tc-todos" class="nav-badge" style="position:static;display:inline-flex;margin-left:4px">0</span></button>
+              <button class="tab-btn" onclick="setTabPac('menores',this)">Menores de 18 <span id="tc-menores" class="nav-badge" style="position:static;display:inline-flex;margin-left:4px">0</span></button>
+              <button class="tab-btn" onclick="setTabPac('maiores',this)">Maiores de 18 <span id="tc-maiores" class="nav-badge" style="position:static;display:inline-flex;margin-left:4px">0</span></button>
+            </div>
+            <div id="curso-tabs" class="curso-tabs-inline"></div>
+          </div>
+          <table><thead><tr><th>Aluno</th><th>Matrícula</th><th>Curso / Turma</th><th>Idade</th><th>Nascimento</th><th>PCD</th><th>Atendimentos</th><th>Ações</th></tr></thead>
+          <tbody id="tbody-alunos"><tr><td colspan="8" style="text-align:center;padding:36px;color:var(--gray-400)">Carregando...</td></tr></tbody></table>
+        </div>
+      </div>
+
+      <!-- CHAT -->
+      <!-- APROVAÇÕES -->
+      <div id="panel-aprovacoes" class="panel-section fade-up">
+        <div class="data-table-wrap">
+          <div class="data-table-head">
+            <div class="data-table-title">Aprovação de Cadastros</div>
+          </div>
+          <table>
+            <thead><tr><th>Aluno</th><th>Matrícula</th><th>CPF</th><th>Curso / Turma</th><th>Idade</th><th>Contato</th><th>PCD</th><th>Atendimentos</th><th>Ações</th></tr></thead>
+            <tbody id="tbody-aprovacoes"><tr><td colspan="7" style="text-align:center;padding:36px;color:var(--gray-400)">Carregando...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+
+
+      <!-- CALENDÁRIO -->
+      <div id="panel-calendario" class="panel-section fade-up">
+        <div class="data-table-wrap">
+          <div class="data-table-head">
+            <div class="data-table-title">Calendário de Atendimentos</div>
+            <div style="display:flex;gap:10px;align-items:center">
+              <div class="tab-group" style="border:none;padding:0">
+                <button class="tab-btn active" onclick="setCalView('mes',this)" id="cal-btn-mes">Mês</button>
+                <button class="tab-btn" onclick="setCalView('semana',this)" id="cal-btn-semana">Semana</button>
+                <button class="tab-btn" onclick="setCalView('dia',this)" id="cal-btn-dia">Dia</button>
+              </div>
+              <button class="btn btn-outline btn-sm" onclick="calNavPrev()">‹</button>
+              <span id="cal-titulo" style="font-weight:700;font-size:14px;min-width:160px;text-align:center"></span>
+              <button class="btn btn-outline btn-sm" onclick="calNavNext()">›</button>
+              <button class="btn btn-outline btn-sm" onclick="calHoje()">Hoje</button>
+              <button class="btn btn-outline btn-sm" onclick="abrirModalAgendaEvento()" style="margin-left:6px">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:14px;height:14px">
+                <line x1="12" y1="5" x2="12" y2="19"/>
+                <line x1="5" y1="12" x2="19" y2="12"/>
+              </svg>
+              Novo Evento
+            </button>
+
+            <button class="btn btn-orange btn-sm" onclick="abrirModalAgendar(null)">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:14px;height:14px">
+                <line x1="12" y1="5" x2="12" y2="19"/>
+                <line x1="5" y1="12" x2="19" y2="12"/>
+              </svg>
+              Novo Atendimento
+            </button>
+            </div>
+          </div>
+          <div id="cal-container" style="padding:20px"></div>
+        </div>
+      </div>
+
+      <div id="panel-chat" class="panel-section fade-up">
+        <div class="chat-wrap chat-wrap-enhanced">
+          <aside class="chat-sidebar-panel">
+            <div class="chat-sidebar-head">
+              <div>
+                <strong>Conversas</strong>
+                <small>Mensagens da unidade</small>
+              </div>
+              <button type="button" class="btn btn-orange btn-sm chat-new-btn" onclick="abrirNovoChat()">+ Nova</button>
+            </div>
+            <div class="chat-tabs chat-contact-list" id="chat-tabs"></div>
+          </aside>
+          <section class="chat-main-panel">
+            <div class="chat-current-header" id="chat-current-header">
+              <div class="chat-current-avatar">?</div>
+              <div class="chat-current-info">
+                <strong>Selecione uma conversa</strong>
+                <small>Escolha um contato na lateral ou inicie uma nova conversa</small>
+              </div>
+            </div>
+            <div class="chat-body" id="chat-body">
+              <div class="chat-empty-msg">Selecione uma conversa na lateral.</div>
+            </div>
+            <div class="chat-input-row">
+              <textarea class="chat-textarea" id="chat-txt" rows="1" placeholder="Digite sua mensagem..."></textarea>
+              <button class="chat-send-btn" id="chat-send-btn" onclick="enviarMsgPsi()">
+                <svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+              </button>
+            </div>
+          </section>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- MODAL NOVA CONVERSA -->
+<div class="modal-overlay" id="modal-novo-chat">
+  <div class="modal-box" style="max-width:560px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+      <h3 style="font-family:var(--font-display);font-size:20px;font-weight:700;color:var(--senac-navy)">Nova conversa</h3>
+      <button onclick="closeModal('modal-novo-chat')" style="background:none;border:none;cursor:pointer;color:var(--gray-400)">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <input class="form-control" id="chat-user-search" placeholder="Buscar usuário pelo nome, login ou função..." oninput="renderNovoChatUsuarios()" style="margin-bottom:12px">
+    <div id="chat-user-list" class="chat-user-list"></div>
+  </div>
+</div>
+
+<!-- MODAL ATENDIMENTO -->
+<div class="modal-overlay" id="modal-cons">
+  <div class="modal-box" style="max-width:540px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+      <h3 style="font-family:var(--font-display);font-size:20px;font-weight:700;color:var(--senac-navy)" id="mc-title">Atendimento</h3>
+      <button onclick="closeModal('modal-cons')" style="background:none;border:none;cursor:pointer;color:var(--gray-400)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>
+    <div id="mc-body"></div>
+    <div style="margin-top:16px">
+      <button type="button" class="btn btn-outline btn-sm" onclick="toggleRelatorioConsulta()" id="btn-relatorio-consulta" style="width:100%;justify-content:center">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+        Relatório da consulta
+      </button>
+      <div id="mc-relatorio-wrap" style="display:none;margin-top:12px;background:var(--gray-50);border:1px solid var(--gray-100);border-radius:var(--r-sm);padding:12px">
+        <label class="form-label">Relatório da consulta</label>
+        <textarea class="form-control" id="mc-relatorio" rows="5" placeholder="Registre aqui as informações importantes da consulta, orientações, encaminhamentos e observações do acompanhamento..." style="resize:vertical"></textarea>
+        <div style="font-size:11.5px;color:var(--gray-500);margin-top:6px">Esse relatório ficará registrado no histórico do atendimento e nas observações do aluno.</div>
+      </div>
+    </div>
+    <div style="margin-top:12px">
+      <button type="button" class="btn btn-outline btn-sm" onclick="toggleTipoAtendimentoRealizado()" id="btn-tipo-atendimento-realizado" style="width:100%;justify-content:center">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16"/><path d="M4 12h16"/><path d="M4 18h16"/><circle cx="8" cy="6" r="2"/><circle cx="14" cy="12" r="2"/><circle cx="10" cy="18" r="2"/></svg>
+        Tipo de atendimento realizado
+      </button>
+      <div id="mc-categoria-wrap" style="display:none;margin-top:12px;background:var(--gray-50);border:1px solid var(--gray-100);border-radius:var(--r-sm);padding:12px">
+        <label class="form-label">Tipo de atendimento realizado</label>
+        <select class="form-control" id="mc-categoria-atendimento"></select>
+        <div style="font-size:11.5px;color:var(--gray-500);margin-top:6px">Essa escolha da psicóloga é o que alimenta o gráfico de Tipos de Atendimento na aba Indicativos.</div>
+      </div>
+    </div>
+    <div style="margin-top:16px"><label class="form-label">Observação da Psicóloga</label><textarea class="form-control" id="mc-obs" rows="2" placeholder="Anotações..." style="resize:vertical"></textarea></div>
+    <div style="margin-top:14px"><label class="form-label">Atualizar Status</label><div class="status-btn-group" id="mc-status-btns"></div></div>
+    <div style="display:flex;gap:10px;margin-top:20px">
+      <button class="btn btn-outline" onclick="closeModal('modal-cons')" style="flex:1">Fechar</button>
+      <button class="btn btn-orange" onclick="salvarAtendimento()" style="flex:2">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/></svg>
+        Salvar
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL HISTORICO -->
+<div class="modal-overlay" id="modal-hist">
+  <div class="modal-box" style="max-width:500px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+      <h3 style="font-family:var(--font-display);font-size:20px;font-weight:700;color:var(--senac-navy)" id="mh-title">Histórico</h3>
+      <button onclick="closeModal('modal-hist')" style="background:none;border:none;cursor:pointer;color:var(--gray-400)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>
+    <div id="mh-body"></div>
+  </div>
+</div>
+
+<!-- MODAL NOVO AGENDAMENTO -->
+<div class="modal-overlay" id="modal-agendar">
+  <div class="modal-box" style="max-width:520px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+      <h3 style="font-family:var(--font-display);font-size:20px;font-weight:700;color:var(--senac-navy)" id="mag-title">Novo Atendimento</h3>
+      <button onclick="closeModal('modal-agendar')" style="background:none;border:none;cursor:pointer;color:var(--gray-400)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>
+    <div style="background:#f8fafc;border:1px solid var(--gray-100);border-radius:var(--r-sm);padding:10px 12px;margin-bottom:14px;font-size:12.5px;color:var(--gray-500)">
+      Este atendimento será criado diretamente pela psicóloga logada, sem precisar de encaminhamento do instrutor ou da coordenação.
+    </div>
+    <div id="mag-aluno-info" style="display:none;background:var(--gray-50);border-radius:var(--r-sm);padding:12px 14px;margin-bottom:14px">
+      <div style="font-size:13px;font-weight:700;color:var(--senac-navy)" id="mag-aluno-nome"></div>
+      <div style="font-size:12px;color:var(--gray-500)" id="mag-aluno-detalhe"></div>
+    </div>
+    <div style="margin-bottom:14px" id="mag-select-wrap">
+      <label class="form-label">Selecionar aluno atendido</label>
+      <select class="form-control" id="mag-aluno-sel" onchange="magSelecionarAluno()">
+        <option value="">Selecione o aluno...</option>
+      </select>
+    </div>
+    <div style="margin-bottom:14px">
+      <label class="form-label">Tipo de atendimento</label>
+      <select class="form-control" id="mag-tipo" onchange="magAtualizarTipo()">
+        <option value="">Selecione o tipo...</option>
+        <option value="dentro">Dentro do horário do curso</option>
+        <option value="fora">Fora do horário do curso</option>
+        <option value="remoto">Atendimento Remoto</option>
+      </select>
+      <div id="mag-tipo-info" style="display:none;margin-top:8px;border-radius:var(--r-sm);padding:9px 13px;font-size:12.5px"></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:18px">
+      <div>
+        <label class="form-label">Data do atendimento</label>
+        <input type="date" class="form-control" id="mag-data">
+      </div>
+      <div>
+        <label class="form-label">Turno</label>
+        <select class="form-control" id="mag-turno">
+          <option value="">Selecione...</option>
+          <option value="manhã">Manhã</option>
+          <option value="tarde">Tarde</option>
+          <option value="noite">Noite</option>
+        </select>
+      </div>
+      <div>
+        <label class="form-label">Horário</label>
+        <input type="time" class="form-control" id="mag-hora">
+      </div>
+    </div>
+    <div style="margin-bottom:14px">
+      <label class="form-label">Motivo / Observação</label>
+      <textarea class="form-control" id="mag-motivo" rows="3" placeholder="Descreva o motivo, observação ou orientação inicial..." style="resize:vertical"></textarea>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:20px">
+      <button class="btn btn-outline" onclick="closeModal('modal-agendar')" style="flex:1">Cancelar</button>
+      <button class="btn btn-orange" onclick="confirmarNovoAgendamento()" style="flex:2">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        Criar Atendimento
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL NOVO EVENTO DA AGENDA -->
+<div class="modal-overlay" id="modal-agenda-evento">
+  <div class="modal-box" style="max-width:560px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+      <div>
+        <div style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:1.6px;color:var(--senac-orange);margin-bottom:4px">
+          Agenda da Psicóloga
+        </div>
+        <h3 style="font-family:var(--font-display);font-size:22px;font-weight:700;color:var(--senac-navy)">
+          Novo evento
+        </h3>
+      </div>
+
+      <button onclick="closeModal('modal-agenda-evento')" style="background:none;border:none;cursor:pointer;color:var(--gray-400)">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="18" y1="6" x2="6" y2="18"/>
+          <line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+
+    <div style="background:#f8fafc;border:1px solid var(--gray-100);border-radius:var(--r-sm);padding:10px 12px;margin-bottom:14px;font-size:12.5px;color:var(--gray-500)">
+      Use esta opção para registrar reunião, lembrete, bloqueio de horário ou observações da rotina da psicóloga.
+    </div>
+
+    <div style="margin-bottom:14px">
+      <label class="form-label">Título *</label>
+      <input class="form-control" id="mev-titulo" placeholder="Ex.: Reunião com coordenação">
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
+      <div>
+        <label class="form-label">Tipo</label>
+        <select class="form-control" id="mev-tipo">
+          <option value="REUNIAO">Reunião</option>
+          <option value="LEMBRETE">Lembrete</option>
+          <option value="BLOQUEIO">Bloqueio de horário</option>
+          <option value="OBSERVACAO">Observação</option>
+          <option value="OUTRO">Outro</option>
+        </select>
+      </div>
+
+      <div>
+        <label class="form-label">Data *</label>
+        <input type="date" class="form-control" id="mev-data">
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
+      <div>
+        <label class="form-label">Hora inicial</label>
+        <input type="time" class="form-control" id="mev-inicio">
+      </div>
+
+      <div>
+        <label class="form-label">Hora final</label>
+        <input type="time" class="form-control" id="mev-fim">
+      </div>
+    </div>
+
+    <div style="margin-bottom:14px">
+      <label class="form-label">Descrição / observação</label>
+      <textarea class="form-control" id="mev-descricao" rows="4" placeholder="Escreva uma observação para este evento..." style="resize:vertical"></textarea>
+    </div>
+
+    <div style="display:flex;gap:10px;margin-top:20px">
+      <button class="btn btn-outline" onclick="closeModal('modal-agenda-evento')" style="flex:1">
+        Cancelar
+      </button>
+
+      <button class="btn btn-orange" onclick="salvarAgendaEvento()" style="flex:2">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+          <polyline points="17 21 17 13 7 13 7 21"/>
+        </svg>
+        Salvar evento
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL DETALHE DO EVENTO DA AGENDA -->
+<div class="modal-overlay" id="modal-agenda-detalhe">
+  <div class="modal-box" style="max-width:520px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+      <div>
+        <div style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:1.6px;color:var(--senac-orange);margin-bottom:4px">
+          Detalhes do evento
+        </div>
+        <h3 style="font-family:var(--font-display);font-size:22px;font-weight:700;color:var(--senac-navy)" id="mae-title">
+          Evento
+        </h3>
+      </div>
+
+      <button onclick="closeModal('modal-agenda-detalhe')" style="background:none;border:none;cursor:pointer;color:var(--gray-400)">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="18" y1="6" x2="6" y2="18"/>
+          <line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+
+    <div id="mae-body"></div>
+
+    <div style="display:flex;gap:10px;margin-top:20px">
+      <button class="btn btn-outline" onclick="closeModal('modal-agenda-detalhe')" style="flex:1">
+        Fechar
+      </button>
+
+      <button class="btn btn-danger" onclick="excluirAgendaEventoSelecionado()" style="flex:1">
+        Excluir
+      </button>
+    </div>
+  </div>
+</div>
+
+<div id="toast-container"></div>
+<script src="../js/app.js"></script>
+<script src="../js/theme-chat.js"></script>
+<script src="../js/painel-psicologo.js"></script>
+</body>
+</html>

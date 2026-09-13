@@ -233,4 +233,26 @@
       border-color:rgba(255,127,120,.34) !important;
       color:#ffaaa5 !important;
     }
+
+    /* Correções responsivas da migração React: preservam o desktop original. */
+    #root,#root>div{width:100%;max-width:100%;overflow-x:hidden}
+    .hero-inner{width:100%;min-width:0}
+    .hero-inner>*{min-width:0;max-width:100%}
+    @media(max-width:600px){
+      .topnav{height:58px;padding:0 16px}
+      .topnav-divider,.topnav-divider+span,.topnav-link{display:none}
+      .topnav-senac-svg{width:46px}
+      .topnav-name{font-size:13px;letter-spacing:2px}
+      .topnav-sub{font-size:8px;letter-spacing:1.4px}
+      .hero{min-height:auto;padding:112px 18px 64px}
+      .hero-logo-svg{width:132px}
+      .hero-badge{max-width:100%;padding:7px 12px;font-size:9px;letter-spacing:.8px}
+      .hero-title{width:100%;font-size:clamp(36px,11vw,44px);overflow-wrap:anywhere}
+      .hero-title-line2{font-size:14px;line-height:1.55}
+      .hero-desc{font-size:14px;line-height:1.75;margin-bottom:28px}
+      .cards-section,.features{padding-left:16px;padding-right:16px}
+      .section{padding:48px 16px}
+      .section>div[style*="grid-template-columns"]{grid-template-columns:1fr !important}
+      #modal-perfil>div{padding:24px !important;border-radius:18px !important}
+    }
   

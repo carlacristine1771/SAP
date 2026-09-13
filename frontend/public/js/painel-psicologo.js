@@ -2,7 +2,7 @@
 initStore();
 
 var _sess = getSession();
-if (!_sess || _sess.role !== 'psicologa') { clearSession(); window.location.href = '../index.html'; }
+if (!_sess || _sess.role !== 'psicologa') { clearSession(); window.location.href = '/'; }
 
 document.getElementById('sb-nome').textContent   = _sess.nome || 'Psicóloga';
 document.getElementById('sb-avatar').textContent = (_sess.nome || 'P').charAt(0);

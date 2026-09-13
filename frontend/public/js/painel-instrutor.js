@@ -1,27 +1,23 @@
-/* ============================================================
-   painel-coordenacao.js (inline)
-   CORREÇÃO #3: coordenação tem visão GLOBAL de todos os alunos
-   e todas as atendimentos. Pode encaminhar qualquer aluno aprovado.
-   ============================================================ */
 'use strict';
 initStore();
 
 var _sess = getSession();
-if (!_sess || _sess.role !== 'coordenacao') {
+if (!_sess || _sess.role !== 'instrutor') {
   clearSession();
-  clearSession(); window.location.href = '../index.html';
+  clearSession(); window.location.href = '/';
 }
 
-document.getElementById('sb-nome').textContent   = _sess.nome || 'Coordenação';
-document.getElementById('sb-setor').textContent  = _sess.setor || 'Coordenação';
+/* Inicializa UI com dados da sessão */
+document.getElementById('sb-nome').textContent   = _sess.nome || 'Instrutor';
+document.getElementById('sb-setor').textContent  = _sess.disciplina || 'Instrutor';
+document.getElementById('sb-avatar').textContent = (_sess.nome || 'I').charAt(0);
+document.getElementById('wb-nome').textContent   = 'Olá, ' + (_sess.nome || 'Instrutor').split(' ')[0] + '!';
+document.getElementById('wb-setor').textContent  = _sess.disciplina || 'SENAC CEP';
 (function(){
   var unNome = nomeUnidade(_sess.unidadeId);
   var el = document.querySelector('.topbar-breadcrumb');
-  if (el) el.textContent = 'SAP · Coordenação · ' + unNome;
+  if (el) el.textContent = 'SAP · Instrutor · ' + unNome;
 })();
-document.getElementById('sb-avatar').textContent = (_sess.nome || 'C').charAt(0);
-document.getElementById('wb-nome').textContent   = 'Olá, ' + (_sess.nome || 'Coordenação').split(' ')[0] + '!';
-document.getElementById('wb-setor').textContent  = _sess.setor || 'SENAC CEP';
 
 /* ── Navegação ── */
 function navTo(panelId, navEl) {
@@ -33,29 +29,28 @@ function navTo(panelId, navEl) {
   var labelEl = navEl ? navEl.querySelector('.nav-label') : null;
   document.getElementById('topbar-title').textContent = labelEl ? labelEl.textContent : '';
   if (panelId === 'panel-home')       renderHome();
-  if (panelId === 'panel-alunos')     popularCursosAlunoCadastro();
-  renderAlunos();
+  if (panelId === 'panel-alunos')     { popularCursosAlunoCadastro(); renderAlunos(); }
   if (panelId === 'panel-atendimentos')  renderAtendimentos();
   if (panelId === 'panel-encaminhar') popularSelectAlunos();
   if (panelId === 'panel-chat')       renderChat();
-  if (panelId === 'panel-cursos')     { renderCursos(); renderTurmas(); }
-  if (panelId === 'panel-instrutores') renderInstrutores();
 }
 
-/* ── Home ── */
+/* ── Home / Dashboard ── */
 function renderHome() {
-  var store = getStore();
-  var atendimentosUnidade = Permissions.getAtendimentosVisiveis(_sess, store.atendimentos, store.alunos);
-  var todosAlunos = Permissions.getAlunosVisiveis(_sess, store.alunos);
+  var store    = getStore();
+  /* CORREÇÃO #3: filtra atendimentos apenas dos alunos do instrutor */
+  var minhasAtendimentos = Permissions.getAtendimentosVisiveis(_sess, store.atendimentos, store.alunos)
+                          .filter(function(c) { return c.agendadoPor === _sess.id; });
+  var meusAlunos = Permissions.getAlunosVisiveis(_sess, store.alunos);
 
-  document.getElementById('st-alunos').textContent = todosAlunos.length;
-  document.getElementById('st-agt').textContent    = atendimentosUnidade.filter(function(c){ return c.status==='aguardando'; }).length;
-  document.getElementById('st-conf').textContent   = atendimentosUnidade.filter(function(c){ return c.status==='confirmada'; }).length;
-  document.getElementById('st-real').textContent   = atendimentosUnidade.filter(function(c){ return c.status==='realizada'; }).length;
+  document.getElementById('st-alunos').textContent = meusAlunos.length;
+  document.getElementById('st-agt').textContent    = minhasAtendimentos.filter(function(c){ return c.status==='aguardando'; }).length;
+  document.getElementById('st-conf').textContent   = minhasAtendimentos.filter(function(c){ return c.status==='confirmada'; }).length;
+  document.getElementById('st-real').textContent   = minhasAtendimentos.filter(function(c){ return c.status==='realizada'; }).length;
 
-  renderAlunosDashboard(todosAlunos);
+  renderAlunosDashboard(meusAlunos);
 
-  var recentes = atendimentosUnidade.slice().sort(function(a,b){ return new Date(b.criacao)-new Date(a.criacao); }).slice(0,5);
+  var recentes = minhasAtendimentos.slice().sort(function(a,b){ return new Date(b.criacao)-new Date(a.criacao); }).slice(0,5);
   var el = document.getElementById('home-recentes');
   if (!el) return;
   if (!recentes.length) {
@@ -64,6 +59,7 @@ function renderHome() {
   }
   el.innerHTML = recentes.map(function(c) {
     var al = store.alunos.find(function(a){ return a.id===c.idAluno; }) || {nome:'—'};
+    /* CORREÇÃO #5: escape() em dados do usuário */
     return '<div class="atendimento-item">'
       + '<div class="ci-status-bar bar-' + escape(c.status) + '"></div>'
       + '<div class="ci-body">'
@@ -220,7 +216,7 @@ function renderAlunosDashboard(alunos) {
   function topEntries(map, limit) {
     return Object.keys(map).sort(function(a,b){ return map[b]-map[a] || a.localeCompare(b); }).slice(0, limit || 6);
   }
-  function renderRows(elId, map, limit, labelSing, empty) {
+  function renderRows(elId, map, limit, empty) {
     var el = document.getElementById(elId);
     if (!el) return;
     var keys = topEntries(map, limit);
@@ -229,15 +225,15 @@ function renderAlunosDashboard(alunos) {
       var n = map[k], pct = total ? Math.round(n / total * 100) : 0;
       return '<div class="dash-row">'
         + '<div class="dash-row-main"><div class="dash-row-title">' + escape(k) + '</div>'
-        + '<div class="dash-row-sub">' + pct + '% dos alunos visíveis</div></div>'
+        + '<div class="dash-row-sub">' + pct + '% dos meus alunos</div></div>'
         + '<div class="dash-row-value">' + n + '</div>'
         + '<div class="dash-row-track"><div class="dash-row-fill" style="--pct:' + pct + '%"></div></div>'
         + '</div>';
     }).join('');
   }
 
-  renderCursoPizza(countBy('curso', 'Sem curso'), total, 'dos alunos visíveis');
-  renderRows('dash-turmas', countBy('turma', 'Sem turma'), 6, 'aluno', 'Nenhuma turma cadastrada ainda.');
+  renderCursoPizza(countBy('curso', 'Sem curso'), total, 'dos meus alunos');
+  renderRows('dash-turmas', countBy('turma', 'Sem turma'), 6, 'Nenhuma turma vinculada ainda.');
 
   var ativos = alunos.filter(function(a){ return a.statusCadastro === 'ativo' || a.statusCadastro === 'aprovado'; }).length;
   var pcd = alunos.filter(function(a){ return !!a.pcd; }).length;
@@ -247,11 +243,11 @@ function renderAlunosDashboard(alunos) {
   var resumo = document.getElementById('dash-resumo');
   if (resumo) {
     resumo.innerHTML =
-      '<div class="dash-mini orange"><div class="dash-mini-value">' + total + '</div><div class="dash-mini-label">Total de alunos</div></div>'
+      '<div class="dash-mini orange"><div class="dash-mini-value">' + total + '</div><div class="dash-mini-label">Meus alunos</div></div>'
       + '<div class="dash-mini green"><div class="dash-mini-value">' + ativos + '</div><div class="dash-mini-label">Ativos/aprovados</div></div>'
       + '<div class="dash-mini navy"><div class="dash-mini-value">' + menores + '</div><div class="dash-mini-label">Menores de 18</div></div>'
       + '<div class="dash-mini blue"><div class="dash-mini-value">' + pcd + '</div><div class="dash-mini-label">Alunos PCD</div></div>'
-      + '<div class="dash-mini orange"><div class="dash-mini-value">' + escape(turnoLabel(turnoTop)) + '</div><div class="dash-mini-label">Turno com mais alunos</div></div>';
+      + '<div class="dash-mini orange"><div class="dash-mini-value">' + escape(turnoLabel(turnoTop)) + '</div><div class="dash-mini-label">Turno principal</div></div>';
   }
 
   var recentes = alunos.slice().sort(function(a,b){ return new Date(b.dataCadastro || 0) - new Date(a.dataCadastro || 0); }).slice(0,5);
@@ -265,37 +261,41 @@ function renderAlunosDashboard(alunos) {
   }
 }
 
-/* ── Lista de Alunos (visão global) ── */
+/* ── Lista de Alunos ── */
 function renderAlunos() {
   var store = getStore();
   var q = (document.getElementById('busca-al') ? document.getElementById('busca-al').value : '').toLowerCase();
 
-  /* CORREÇÃO #3: coordenação vê todos */
+  /* CORREÇÃO #3: apenas alunos das turmas do instrutor */
   var lista = Permissions.getAlunosVisiveis(_sess, store.alunos).filter(function(a) {
-    return !q || a.nome.toLowerCase().indexOf(q)>=0 || a.matricula.indexOf(q)>=0;
+    return !q || a.nome.toLowerCase().indexOf(q) >= 0 || a.matricula.indexOf(q) >= 0;
   });
 
   var tb = document.getElementById('tbody-alunos');
   if (!tb) return;
   if (!lista.length) {
-    tb.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:36px;color:var(--gray-400)">Nenhum aluno</td></tr>';
+    tb.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:36px;color:var(--gray-400)">Nenhum aluno encontrado</td></tr>';
     return;
   }
   tb.innerHTML = lista.map(function(a) {
     var nc = store.atendimentos.filter(function(c){ return c.idAluno===a.id; }).length;
-    var statusColor = a.statusCadastro==='ativo'?'#dcfce7;color:#15803d'
-                    : a.statusCadastro==='pendente'?'#FEF3DC;color:#C87F00'
-                    : '#fee2e2;color:#991b1b';
-    var statusLabel = a.statusCadastro==='ativo'?'Aprovado'
-                    : a.statusCadastro==='pendente'?'Pendente':'Rejeitado';
+    /* Badge de status do cadastro */
+    var statusBadgeHtml = '';
+    if (a.statusCadastro === 'pendente') {
+      statusBadgeHtml = '<span style="font-size:10px;font-weight:700;background:#FEF3DC;color:#C87F00;padding:2px 7px;border-radius:20px;margin-left:6px;">Pendente</span>';
+    } else if (a.statusCadastro === 'aprovado') {
+      statusBadgeHtml = '<span style="font-size:10px;font-weight:700;background:#dcfce7;color:#15803d;padding:2px 7px;border-radius:20px;margin-left:6px;">Aprovado</span>';
+    } else if (a.statusCadastro === 'rejeitado') {
+      statusBadgeHtml = '<span style="font-size:10px;font-weight:700;background:#fee2e2;color:#991b1b;padding:2px 7px;border-radius:20px;margin-left:6px;">Rejeitado</span>';
+    }
     return '<tr>'
       + '<td><div style="font-weight:600">' + escape(a.nome) + '</div>'
       + '<div style="font-size:11.5px;color:var(--gray-400)">' + escape(a.email||'') + '</div></td>'
       + '<td><code style="font-size:12px">' + escape(a.matricula) + '</code></td>'
       + '<td>' + escape(alunoCursoNome(a, getStore())) + ' / ' + escape(alunoTurmaNome(a, getStore())||'—')
       + '<div style="font-size:11px;color:var(--gray-400)">Turno: ' + turnoLabel(a.turnoCurso) + '</div></td>'
-      + '<td>' + (a.pcd?'<span style="font-size:11px;font-weight:700;background:#E8EFF8;color:#1B3A6B;padding:2px 8px;border-radius:20px;">PCD</span>':'—') + '</td>'
-      + '<td><span style="font-size:11px;font-weight:700;background:' + statusColor + ';padding:2px 8px;border-radius:20px;">' + statusLabel + '</span></td>'
+      + '<td>' + (a.pcd ? '<span style="font-size:11px;font-weight:700;background:#E8EFF8;color:#1B3A6B;padding:2px 8px;border-radius:20px;">PCD</span>' : '—') + '</td>'
+      + '<td>' + statusBadgeHtml + '</td>'
       + '<td style="text-align:center">' + nc + '</td>'
       + '<td><button class="btn btn-outline btn-sm" onclick="encAluno(\'' + a.id + '\')">'
       + '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>'
@@ -309,25 +309,28 @@ function encAluno(id) {
   setTimeout(function() { document.getElementById('enc-aluno').value = id; atualizarCompatibilidade(); }, 80);
 }
 
-/* ── Select de alunos (coordenação vê todos aprovados) ── */
+/* ── Select de alunos no formulário de solicitação ── */
 function popularSelectAlunos() {
   var store = getStore();
-  var aprovados = Permissions.getAlunosVisiveis(_sess, store.alunos, { apenasAprovados: true });
+  /* CORREÇÃO #9: select mostra apenas alunos aprovados da turma do instrutor */
+  var aprovados = Permissions.getAlunosVisiveis(_sess, store.alunos);
   var sel = document.getElementById('enc-aluno');
   if (!sel) return;
   var atual = sel.value;
   var options = '<option value="">Selecione o aluno...</option>'
     + aprovados.map(function(a) {
-        return '<option value="' + a.id + '">' + escape(a.nome) + ' — ' + escape(alunoTurmaNome(a, store) || a.turma || 'Sem turma') + '</option>';
+        return '<option value="' + a.id + '">' + escape(a.nome) + ' (' + escape(alunoTurmaNome(a, store) || a.turma || 'Sem turma') + ')</option>';
       }).join('');
   if (typeof sapSetSelectOptions === 'function') sapSetSelectOptions(sel, options, atual);
   else { sel.innerHTML = options; if (atual && aprovados.some(function(a){ return a.id === atual; })) sel.value = atual; }
   atualizarCompatibilidade();
 }
 
+/* ── Compatibilidade de horário (CORREÇÃO #7) ── */
 function atualizarCompatibilidade() {
   var store    = getStore();
-  var alunoId  = document.getElementById('enc-aluno') ? document.getElementById('enc-aluno').value : '';
+  var alunoId  = document.getElementById('enc-aluno')  ? document.getElementById('enc-aluno').value  : '';
+  var turnoSel = document.getElementById('enc-turno')  ? document.getElementById('enc-turno').value  : '';
   var horaEl   = document.getElementById('enc-hora');
   var hora     = horaEl ? horaEl.value : '';
   var hint     = document.getElementById('enc-hint');
@@ -336,6 +339,7 @@ function atualizarCompatibilidade() {
   var turnoCurso = aluno ? Validators.normalizeTurno(aluno.turnoCurso) : '';
   var tipo = document.getElementById('enc-tipo') ? document.getElementById('enc-tipo').value : '';
 
+  /* Descrição do turno do curso */
   if (hint) {
     hint.textContent = descricaoDisponibilidadeAluno(aluno);
     hint.style.color = aluno && !turnoCurso ? 'var(--s-cancel)' : '';
@@ -352,12 +356,16 @@ function atualizarCompatibilidade() {
     if (turnoPresencial) turnoPresencial.disabled = false;
   }
 
+  /* Auto-seleciona e trava o select de turno conforme o curso do aluno */
   var turnoSelect = document.getElementById('enc-turno');
   if (turnoSelect) {
-    if (turnoCurso && tipo === 'dentro') turnoSelect.value = turnoCurso;
-    else if (turnoCurso && tipo === 'fora' && turnoSelect.value === turnoCurso) turnoSelect.value = '';
+    if (turnoCurso && tipo === 'dentro') {
+      turnoSelect.value = turnoCurso;
+    } else if (turnoCurso && tipo === 'fora' && turnoSelect.value === turnoCurso) {
+      turnoSelect.value = '';
+    }
     Array.from(turnoSelect.options).forEach(function(opt) {
-      if (!opt.value) return;
+      if (!opt.value) return; /* opção vazia */
       var disabled = tipo === 'fora'
         ? !!(turnoCurso && opt.value === turnoCurso)
         : !!(tipo === 'dentro' && turnoCurso && opt.value !== turnoCurso);
@@ -366,17 +374,18 @@ function atualizarCompatibilidade() {
     });
   }
 
+  /* Validação do horário sem apagar valor durante a digitação */
   if (horaEl) {
     var turnoRef = tipo === 'fora' ? (turnoSelect ? turnoSelect.value : '') : turnoCurso;
     var faixa = turnoHoraConfig(turnoRef);
-    // IMPORTANTE: não aplicamos min/max nem limpamos o campo durante a digitação.
-    // Em alguns navegadores, input type="time" com min/max apaga o valor parcial
-    // quando a pessoa ainda está digitando os minutos, por exemplo 09:25.
-    // A validação continua existindo visualmente e no submitEnc().
+    // Não aplicamos min/max dinâmico aqui. Em alguns navegadores, isso apaga
+    // valores parciais do input time enquanto o usuário digita os minutos.
+    // A validação continua visualmente e no submitEnc().
     horaEl.removeAttribute('min');
     horaEl.removeAttribute('max');
   }
 
+  /* Feedback do horário */
   if (aluno && turnoCurso) {
     var turnoHint = tipo === 'fora' ? (turnoSelect ? turnoSelect.value : '') : turnoCurso;
     var faixaLabel = turnoHoraConfig(turnoHint);
@@ -402,6 +411,7 @@ function atualizarCompatibilidade() {
   }
 }
 
+/* ── Submit solicitação ── */
 function submitEnc() {
   var store   = getStore();
   var alunoId = document.getElementById('enc-aluno').value;
@@ -412,43 +422,75 @@ function submitEnc() {
   var obs     = document.getElementById('enc-obs').value.trim();
   var errEl   = document.getElementById('enc-err');
   var tipo = document.getElementById('enc-tipo') ? document.getElementById('enc-tipo').value : '';
+
   errEl.style.display = 'none';
 
-  if (!tipo) { errEl.textContent='Selecione o tipo de atendimento.'; errEl.style.display='block'; return; }
-  if (!alunoId || !motivo || (tipo !== 'remoto' && !turno)) {
-    errEl.textContent = tipo === 'remoto' ? 'Preencha: aluno e motivo.' : 'Preencha: aluno, motivo e turno.'; errEl.style.display='block'; return;
+  if (!tipo) {
+    errEl.textContent = 'Selecione o tipo de atendimento.';
+    errEl.style.display = 'block';
+    return;
   }
+
+  if (!alunoId || !motivo || (tipo !== 'remoto' && !turno)) {
+    errEl.textContent = tipo === 'remoto' ? 'Preencha: aluno e motivo.' : 'Preencha: aluno, motivo e turno.';
+    errEl.style.display = 'block';
+    return;
+  }
+
   var alunoObj = store.alunos.find(function(a){ return a.id===alunoId; });
+
+  /* CORREÇÃO #3: instrutor só pode encaminhar alunos da sua turma */
+  if (!Permissions.podeEncaminharAluno(_sess, alunoObj)) {
+    errEl.textContent = 'Você não tem permissão para encaminhar este aluno.';
+    errEl.style.display = 'block';
+    return;
+  }
+
+  /* CORREÇÃO #7: valida compatibilidade de horário */
   if (tipo === 'fora') {
     var turnoCursoEnc = alunoObj ? Validators.normalizeTurno(alunoObj.turnoCurso) : '';
     var turnoEnc = Validators.normalizeTurno(turno);
     if (turnoCursoEnc && turnoEnc === turnoCursoEnc) {
-      errEl.textContent = 'Para atendimento fora do horario, escolha um turno diferente do curso do aluno.'; errEl.style.display='block'; return;
+      errEl.textContent = 'Para atendimento fora do horario, escolha um turno diferente do curso do aluno.';
+      errEl.style.display = 'block';
+      return;
     }
     if (hora && !horarioDentroDoTurno(hora, turnoEnc)) {
-      errEl.textContent = 'Horario fora da faixa do turno escolhido.'; errEl.style.display='block'; return;
+      errEl.textContent = 'Horario fora da faixa do turno escolhido.';
+      errEl.style.display = 'block';
+      return;
     }
   } else if (tipo !== 'remoto' && hora) {
     var compat = getCompatibilidadeAtendimento(alunoObj, turno, hora);
-    if (!compat.ok) { errEl.textContent=compat.motivo; errEl.style.display='block'; return; }
+    if (!compat.ok) {
+      errEl.textContent = compat.motivo;
+      errEl.style.display = 'block';
+      return;
+    }
   }
+
   store.atendimentos.push({
-    id: genId('c'), idAluno: alunoId, agendadoPor: _sess.id,
+    id: genId('c'),
+    idAluno: alunoId,
+    agendadoPor: _sess.id,
     unidadeId: _sess.unidadeId||'u1',
-    motivoSolicitação: motivo, dataPreferencial: data,
+    motivoSolicitação: motivo,
+    dataPreferencial: data,
     horarioPreferencial: hora,
     turno: tipo === 'remoto' ? 'remoto' : turno,
     tipoAtendimento: tipo,
     obsResponsavel: obs,
-    obsPsicologa: '', status: 'aguardando', criacao: new Date().toISOString()
+    obsPsicologa: '',
+    status: 'aguardando',
+    criacao: new Date().toISOString()
   });
   saveStore(store).then(function(){
-    toast('Solicitação enviada!', 'success');
+    toast('Solicitação enviada com sucesso!', 'success');
     ['enc-aluno','enc-motivo','enc-data','enc-hora','enc-obs'].forEach(function(id){
-      var el=document.getElementById(id); if(el) el.value='';
+      var el = document.getElementById(id); if (el) el.value = '';
     });
-    var ts=document.getElementById('enc-turno'); if(ts) ts.value='';
-    var tt=document.getElementById('enc-tipo'); if(tt) tt.value='';
+    var ts = document.getElementById('enc-turno'); if (ts) ts.value = '';
+    var tt = document.getElementById('enc-tipo'); if (tt) tt.value = '';
     atualizarCompatibilidade();
     refreshActivePanel();
   }).catch(function(err){
@@ -457,15 +499,15 @@ function submitEnc() {
   });
 }
 
-/* ── Atendimentos (visão global) ── */
+/* ── Lista de atendimentos ── */
 function renderAtendimentos() {
   var store = getStore();
-  var q   = document.getElementById('busca-cons') ? document.getElementById('busca-cons').value.toLowerCase() : '';
-  var fSt = document.getElementById('filtro-st')  ? document.getElementById('filtro-st').value : '';
+  var q     = document.getElementById('busca-cons') ? document.getElementById('busca-cons').value.toLowerCase() : '';
+  var fSt   = document.getElementById('filtro-st')  ? document.getElementById('filtro-st').value : '';
 
-  /* CORREÇÃO #3: coordenação vê TODAS as atendimentos */
+  /* CORREÇÃO #3: apenas atendimentos relacionadas aos alunos do instrutor */
   var lista = Permissions.getAtendimentosVisiveis(_sess, store.atendimentos, store.alunos);
-  if (fSt) lista = lista.filter(function(c){ return c.status===fSt; });
+  if (fSt) lista = lista.filter(function(c){ return c.status === fSt; });
   if (q) lista = lista.filter(function(c) {
     var al = store.alunos.find(function(a){ return a.id===c.idAluno; });
     return (al&&al.nome||'').toLowerCase().indexOf(q)>=0
@@ -477,7 +519,8 @@ function renderAtendimentos() {
   var tb = document.getElementById('tbody-cons');
   if (!tb) return;
   if (!lista.length) {
-    tb.innerHTML='<tr><td colspan="6" style="text-align:center;padding:36px;color:var(--gray-400)">Nenhuma atendimento</td></tr>'; return;
+    tb.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:36px;color:var(--gray-400)">Nenhuma atendimento encontrada</td></tr>';
+    return;
   }
   tb.innerHTML = lista.map(function(c) {
     var al = store.alunos.find(function(a){ return a.id===c.idAluno; }) || {nome:'—',matricula:''};
@@ -492,7 +535,7 @@ function renderAtendimentos() {
     return '<tr'+rowStyle+'>'
       + '<td><div style="font-weight:600">' + escape(al.nome) + '</div>'
       + '<div style="font-size:11.5px;color:var(--gray-400)">' + escape(al.matricula) + '</div></td>'
-      + '<td>' + escape(c.motivoSolicitação.length>45?c.motivoSolicitação.slice(0,45)+'…':c.motivoSolicitação) + '</td>'
+      + '<td>' + escape(c.motivoSolicitação.length>45 ? c.motivoSolicitação.slice(0,45)+'…' : c.motivoSolicitação) + '</td>'
       + '<td>' + tLab + tipoTag + '</td>'
       + '<td>' + escape(solicitanteNome(c)) + '</td>'
       + '<td>' + statusBadge(c.status) + '</td>'
@@ -502,134 +545,103 @@ function renderAtendimentos() {
 }
 
 /* ── Chat ── */
-var _chatDestinatarioId = null;
-
-function getPsicologosDaUnidade(store) {
-  store = store || getStore();
-  var lista = (store.psicologos || []).filter(function(p){ return !p.unidadeId || p.unidadeId === _sess.unidadeId; });
-  return lista.length ? lista : (store.psicologos || []);
-}
-
-function getPsicologaDaUnidade(store) {
-  var lista = getPsicologosDaUnidade(store);
-  return lista[0] || null;
-}
-
-function getChatContatoAtual(store) {
-  store = store || getStore();
-  if (!_chatDestinatarioId) return null;
-  return (store.psicologos || []).find(function(p){ return p.id === _chatDestinatarioId; }) || null;
-}
-
-function iniciaisNome(nome) {
-  nome = String(nome || '').trim();
-  if (!nome) return '?';
-  var partes = nome.split(/\s+/).filter(Boolean);
-  return ((partes[0] || '?')[0] + (partes[1] ? partes[1][0] : '')).toUpperCase();
-}
-
-function mensagensDaConversa(store, contatoId) {
-  return (store.mensagens || []).filter(function(m) {
-    return ((m.de === _sess.id && m.para === contatoId) || (m.de === contatoId && m.para === _sess.id))
-      && (m.unidadeId === _sess.unidadeId || !m.unidadeId);
-  }).sort(function(a,b){ return new Date(a.criacao) - new Date(b.criacao); });
-}
-
-function renderChatContatos() {
-  var store = getStore();
-  var contatos = getPsicologosDaUnidade(store);
-  var el = document.getElementById('chat-contatos');
-  if (!el) return;
-  if (!contatos.length) {
-    el.innerHTML = '<div class="chat-empty-contact">Nenhum psicólogo cadastrado para esta unidade.</div>';
-    return;
-  }
-  el.innerHTML = contatos.map(function(p) {
-    var msgs = mensagensDaConversa(store, p.id);
-    var ultima = msgs[msgs.length - 1];
-    var naoLidas = msgs.filter(function(m){ return m.para === _sess.id && !m.lida; }).length;
-    var active = p.id === _chatDestinatarioId ? ' active' : '';
-    return '<button type="button" class="chat-contact' + active + '" onclick="selecionarPsicologoChat(&quot;' + p.id + '&quot;)">'
-      + '<span class="chat-contact-av">' + escape(iniciaisNome(p.nome)) + '</span>'
-      + '<span class="chat-contact-body"><strong>' + escape(p.nome || 'Psicólogo(a)') + '</strong>'
-      + '<small>' + escape(ultima ? ultima.texto.slice(0, 48) + (ultima.texto.length > 48 ? '…' : '') : 'Clique para abrir o chat') + '</small></span>'
-      + (naoLidas ? '<span class="chat-unread">' + naoLidas + '</span>' : '')
-      + '</button>';
-  }).join('');
-}
-
-function selecionarPsicologoChat(id) {
-  _chatDestinatarioId = id;
-  renderChat();
-}
-
 function renderChat() {
   var store = getStore();
-  if (!_chatDestinatarioId) {
-    var primeiro = getPsicologaDaUnidade(store);
-    if (primeiro && document.getElementById('panel-chat') && document.getElementById('panel-chat').classList.contains('active')) {
-      // Não abre automaticamente. Mantém a escolha explícita, como solicitado.
-    }
-  }
-  renderChatContatos();
-  var contato = getChatContatoAtual(store);
-  var nomeEl = document.getElementById('chat-psic-nome');
-  var subEl = document.getElementById('chat-psic-sub');
-  var avEl = document.getElementById('chat-dest-av');
-  var txt = document.getElementById('chat-txt');
-  var btn = document.getElementById('chat-send-btn');
-  var area = document.getElementById('chat-area');
-  if (!area) return;
-  if (!contato) {
-    if (nomeEl) nomeEl.textContent = 'Selecione um psicólogo';
-    if (subEl) subEl.textContent = 'Clique em um contato na lateral';
-    if (avEl) avEl.textContent = '?';
-    if (txt) { txt.value = ''; txt.disabled = true; }
-    if (btn) btn.disabled = true;
-    area.innerHTML = '<div class="chat-empty-msg">Escolha um psicólogo na lista para abrir a conversa.</div>';
-    return;
-  }
-  if (nomeEl) nomeEl.textContent = contato.nome || 'Psicólogo(a)';
-  if (subEl) subEl.textContent = 'Psicologia — SENAC CEP';
-  if (avEl) avEl.textContent = iniciaisNome(contato.nome);
-  if (txt) txt.disabled = false;
-  if (btn) btn.disabled = false;
-
-  var msgs = mensagensDaConversa(store, contato.id);
+  var meuId = _sess.id;
+  var _psicObj = (store.psicologos||[]).find(function(p){return p.unidadeId===_sess.unidadeId;})||{}; var psicId = _psicObj.id || 'psic1';
+  /* Update chat header with psic name */
+  var chatNomeEl = document.getElementById('chat-psic-nome');
+  if (chatNomeEl && _psicObj.nome) chatNomeEl.textContent = _psicObj.nome;
+  var msgs = store.mensagens.filter(function(m) {
+    return (m.de===meuId && m.para===psicId) || (m.de===psicId && m.para===meuId);
+  }).sort(function(a,b){ return new Date(a.criacao)-new Date(b.criacao); });
+  var el = document.getElementById('chat-area');
+  if (!el) return;
   if (!msgs.length) {
-    area.innerHTML = '<div class="chat-empty-msg">Nenhuma mensagem ainda.<br>Digite abaixo para iniciar a conversa.</div>';
+    el.innerHTML = '<div class="chat-empty-msg">Nenhuma mensagem ainda.<br>Inicie uma conversa com a psicóloga.</div>';
     return;
   }
-  area.innerHTML = msgs.map(function(m) {
-    return '<div class="chat-msg ' + (m.de === _sess.id ? 'sent' : 'recv') + '">'
+  el.innerHTML = msgs.map(function(m) {
+    return '<div class="chat-msg ' + (m.de===meuId?'sent':'recv') + '">'
       + '<div class="chat-bubble">' + escape(m.texto) + '</div>'
-      + '<div class="chat-meta">' + fmtDatetime(m.criacao) + '</div></div>';
+      + '<div class="chat-meta">' + fmtDatetime(m.criacao) + '</div>'
+      + '</div>';
   }).join('');
-  area.scrollTop = area.scrollHeight;
+  el.scrollTop = el.scrollHeight;
 }
 
 function enviarMsg() {
   var input = document.getElementById('chat-txt');
   var texto = input ? input.value.trim() : '';
-  if (!_chatDestinatarioId) { toast('Clique em um psicólogo antes de enviar mensagem.', 'warning'); return; }
-  if (!texto) return;
+  if (!texto) { toast('Escreva uma mensagem antes de enviar.','warning'); return; }
   var store = getStore();
-  var contato = getChatContatoAtual(store);
-  if (!contato) { toast('Psicólogo não encontrado.', 'error'); return; }
-  store.mensagens.push({ id:genId('m'), de:_sess.id, para:contato.id, unidadeId:_sess.unidadeId || 'u1', texto:texto, criacao:new Date().toISOString(), lida:false });
-  saveStore(store).then(function(){ renderChat(); });
-  input.value = '';
+  /* CORREÇÃO: busca psicólogo da unidade do instrutor */
+  var psicObj = (store.psicologos||[]).find(function(p){ return p.unidadeId===_sess.unidadeId; }) || store.psicologos[0] || {id:'psic1'};
+  store.mensagens.push({
+    id: genId('m'),
+    de: _sess.id,
+    para: psicObj.id,
+    unidadeId: _sess.unidadeId,
+    texto: texto,
+    criacao: new Date().toISOString()
+  });
+  saveStore(store).then(function(){
+    input.value = '';
+    renderChat();
+  }).catch(function(err){
+    toast(err && err.message ? err.message : 'Não foi possível salvar a mensagem no banco.', 'error');
+  });
   renderChat();
 }
 
 document.addEventListener('keydown', function(e) {
-  if (e.key === 'Enter' && !e.shiftKey && document.activeElement && document.activeElement.id === 'chat-txt') {
-    e.preventDefault();
+  if (e.key === 'Enter' && document.activeElement && document.activeElement.id === 'chat-txt') {
     enviarMsg();
   }
 });
 
 /* ── Cadastro de aluno ── */
+function turmasDoInstrutorCadastro(){
+  var store = getStore();
+  return (store.turmas || []).filter(function(t){
+    if (t.ativo === false) return false;
+    if (t.instrutorId) return t.instrutorId === _sess.id || apiLongFromCompat(t.instrutorId) === _sess.apiId;
+    return (_sess.turmaIds || []).indexOf(t.id) >= 0;
+  });
+}
+function cursosDoInstrutorCadastro(){
+  var store = getStore();
+  var turmaCursos = turmasDoInstrutorCadastro().map(function(t){ return t.cursoId; });
+  return (store.cursos || []).filter(function(c){ return c.ativo !== false && turmaCursos.indexOf(c.id) >= 0; });
+}
+function popularCursosAlunoCadastro(){
+  var sel = document.getElementById('cad-curso');
+  if (!sel) return;
+  var atual = sel.value;
+  var cursos = cursosDoInstrutorCadastro();
+  var html = '<option value="">Selecione um curso cadastrado...</option>' + cursos.map(function(c){ return '<option value="' + c.id + '">' + escape(c.nome) + '</option>'; }).join('');
+  if (typeof sapSetSelectOptions === 'function') sapSetSelectOptions(sel, html, atual);
+  else { sel.innerHTML = html; if (atual && cursos.some(function(c){ return c.id === atual; })) sel.value = atual; }
+  popularTurmasAlunoCadastro();
+}
+function popularTurmasAlunoCadastro(){
+  var cursoId = document.getElementById('cad-curso') ? document.getElementById('cad-curso').value : '';
+  var sel = document.getElementById('cad-turma');
+  if (!sel) return;
+  var atual = sel.value;
+  var turmas = turmasDoInstrutorCadastro().filter(function(t){ return !cursoId || t.cursoId === cursoId; });
+  var html = '<option value="">Selecione uma turma cadastrada...</option>' + turmas.map(function(t){ return '<option value="' + t.id + '">' + escape(t.nome) + ' — ' + turnoLabel(t.turno) + '</option>'; }).join('');
+  if (typeof sapSetSelectOptions === 'function') sapSetSelectOptions(sel, html, atual);
+  else { sel.innerHTML = html; if (atual && turmas.some(function(t){ return t.id === atual; })) sel.value = atual; }
+  if (atual && !turmas.some(function(t){ return t.id === atual; })) sel.value = '';
+  atualizarTurnoAlunoPelaTurma();
+}
+function atualizarTurnoAlunoPelaTurma(){
+  var turmaId = document.getElementById('cad-turma') ? document.getElementById('cad-turma').value : '';
+  var turma = getStore().turmas.find(function(t){ return t.id === turmaId; });
+  var turnoEl = document.getElementById('cad-turno');
+  if (turnoEl && turma && turma.turno) turnoEl.value = Validators.normalizeTurno(turma.turno);
+}
 function salvarAluno() {
   var nome  = document.getElementById('cad-nome').value.trim();
   var mat   = document.getElementById('cad-mat').value.trim();
@@ -642,28 +654,29 @@ function salvarAluno() {
   var pcd   = document.getElementById('cad-pcd').value === 'sim';
   var eml   = document.getElementById('cad-email').value.trim();
   var errEl = document.getElementById('cad-err');
-  errEl.style.display='none';
+  errEl.style.display = 'none';
 
-  if (!nome||!mat||!cpf||!nasc||!tel||!curId||!turId||!turno) {
-    errEl.textContent='Preencha todos os campos obrigatórios e selecione um curso/turma cadastrados.'; errEl.style.display='block'; return;
+  /* CORREÇÃO #6: validações robustas */
+  if (!nome || !mat || !cpf || !nasc || !tel || !curId || !turId || !turno) {
+    errEl.textContent = 'Preencha todos os campos obrigatórios.'; errEl.style.display='block'; return;
   }
   if (!Validators.cpf(cpf)) {
-    errEl.textContent='CPF inválido. Verifique os dígitos.'; errEl.style.display='block'; return;
+    errEl.textContent = 'CPF inválido. Verifique os dígitos.'; errEl.style.display='block'; return;
   }
   if (eml && !Validators.email(eml)) {
-    errEl.textContent='E-mail inválido.'; errEl.style.display='block'; return;
+    errEl.textContent = 'E-mail inválido.'; errEl.style.display='block'; return;
   }
   if (!Validators.telefone(tel)) {
-    errEl.textContent='Telefone inválido.'; errEl.style.display='block'; return;
+    errEl.textContent = 'Telefone inválido (mínimo 10 dígitos).'; errEl.style.display='block'; return;
   }
   var dataNascValidada = Validators.data(nasc);
   if (!dataNascValidada) {
-    errEl.textContent='Data de nascimento inválida.'; errEl.style.display='block'; return;
+    errEl.textContent = 'Data de nascimento inválida.'; errEl.style.display='block'; return;
   }
   var hojeNascimento = new Date();
   hojeNascimento.setHours(23,59,59,999);
   if (dataNascValidada.getTime() > hojeNascimento.getTime()) {
-    errEl.textContent='A data de nascimento não pode ser futura.'; errEl.style.display='block'; return;
+    errEl.textContent = 'A data de nascimento não pode ser futura.'; errEl.style.display='block'; return;
   }
 
   var store = getStore();
@@ -676,28 +689,42 @@ function salvarAluno() {
 
   var cursoObj = store.cursos.find(function(c){ return c.id === curId; });
   var turmaObj = store.turmas.find(function(t){ return t.id === turId; });
-  if (!cursoObj || !turmaObj) {
-    errEl.textContent='Curso ou turma não encontrados. Cadastre primeiro em Cursos e Turmas.'; errEl.style.display='block'; return;
+  if (!cursoObj || !turmaObj || turmaObj.cursoId !== cursoObj.id) {
+    errEl.textContent='Curso ou turma não encontrados. Use apenas cursos e turmas cadastrados para este instrutor.'; errEl.style.display='block'; return;
+  }
+  if (turmaObj.instrutorId && turmaObj.instrutorId !== _sess.id && apiLongFromCompat(turmaObj.instrutorId) !== _sess.apiId) {
+    errEl.textContent='Esta turma não está vinculada a este instrutor.'; errEl.style.display='block'; return;
   }
 
+  /* CORREÇÃO #1: novo aluno sempre como 'pendente' */
   store.alunos.push({
-    id:genId('al'), nome:nome, matricula:mat, cpf:cpf, dataNascimento:nasc, telefone:tel,
-    curso:cursoObj.nome, turma:turmaObj.nome, cursoId:cursoObj.id, turmaId:turmaObj.id,
-    cursoApiId:cursoObj.apiId || null, turmaApiId:turmaObj.apiId || null,
-    turnoCurso:Validators.normalizeTurno(turmaObj.turno || turno),
-    email:eml, pcd:pcd, responsavelCad:_sess.id,
-    unidadeId:_sess.unidadeId||'u1',
-    statusCadastro:'ativo',
-    dataCadastro:new Date().toISOString()
+    id: genId('al'),
+    nome: nome,
+    matricula: mat,
+    cpf: cpf,
+    dataNascimento: nasc,
+    telefone: tel,
+    curso: cursoObj.nome,
+    turma: turmaObj.nome,
+    cursoId: cursoObj.id,
+    turmaId: turmaObj.id,
+    cursoApiId: cursoObj.apiId || null,
+    turmaApiId: turmaObj.apiId || null,
+    turnoCurso: Validators.normalizeTurno(turmaObj.turno || turno), /* CORREÇÃO #8: campo explícito */
+    email: eml,
+    pcd: pcd,
+    responsavelCad: _sess.id,
+    unidadeId: _sess.unidadeId||'u1',
+    statusCadastro: 'ativo',
+    dataCadastro: new Date().toISOString()
   });
   saveStore(store).then(function(){
     closeModal('modal-cad');
     toast('Aluno cadastrado com sucesso!', 'success');
     ['cad-nome','cad-mat','cad-cpf','cad-nasc','cad-tel','cad-curso','cad-turma','cad-turno','cad-email'].forEach(function(id){
-      var el=document.getElementById(id); if(el) el.value='';
+      var el = document.getElementById(id); if (el) el.value='';
     });
-    var pcdSel=document.getElementById('cad-pcd'); if(pcdSel) pcdSel.value='nao';
-    popularCursosAlunoCadastro();
+    var pcdSel = document.getElementById('cad-pcd'); if (pcdSel) pcdSel.value='nao';
     renderAlunos();
   }).catch(function(err){
     errEl.textContent = err && err.message ? err.message : 'Não foi possível salvar o aluno no banco.';
@@ -705,355 +732,8 @@ function salvarAluno() {
   });
 }
 
-/* ── Cursos e Turmas ── */
-function cursosDaUnidade(){
-  return getStore().cursos.filter(function(c){ return !c.unidadeId || c.unidadeId === _sess.unidadeId; });
-}
-function turmasDaUnidade(){
-  return getStore().turmas.filter(function(t){ return !t.unidadeId || t.unidadeId === _sess.unidadeId; });
-}
-
-function instrutoresDaUnidade(){
-  return getStore().instrutores.filter(function(i){ return !i.unidadeId || i.unidadeId === _sess.unidadeId; });
-}
-function renderInstrutores(){
-  var s = getStore(), tb = document.getElementById('tbody-instrutores');
-  if (!tb) return;
-  var q = (document.getElementById('busca-instrutor') ? document.getElementById('busca-instrutor').value : '').toLowerCase().trim();
-  var lista = instrutoresDaUnidade().filter(function(i){
-    var texto = [i.nome, i.usuario, i.email].join(' ').toLowerCase();
-    return !q || texto.indexOf(q) >= 0;
-  });
-  if (!lista.length) {
-    tb.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:36px;color:var(--gray-400)">Nenhum instrutor cadastrado nesta unidade.</td></tr>';
-    return;
-  }
-  tb.innerHTML = lista.map(function(i){
-    var turmas = (s.turmas || []).filter(function(t){ return t.instrutorId === i.id || t.instrutorId === i.apiId || apiLongFromCompat(t.instrutorId) === i.apiId; });
-    var turmasTxt = turmas.length ? turmas.map(function(t){ return t.nome; }).join(', ') : 'Sem turma vinculada';
-    return '<tr>'
-      + '<td><strong>' + escape(i.nome || '—') + '</strong><div style="font-size:11.5px;color:var(--gray-400)">' + escape(nomeUnidade(i.unidadeId)) + '</div></td>'
-      + '<td><code style="font-size:12px">' + escape(i.usuario || '—') + '</code></td>'
-      + '<td>' + escape(i.email || '—') + '</td>'
-      + '<td>' + escape(turmasTxt) + '</td>'
-      + '<td><button class="btn btn-outline btn-sm" onclick="editarInstrutor(&quot;' + i.id + '&quot;)">Editar</button></td>'
-      + '</tr>';
-  }).join('');
-}
-function abrirModalInstrutor(id){
-  var s = getStore();
-  var inst = id ? s.instrutores.find(function(x){ return x.id === id; }) : null;
-  var idEl = document.getElementById('instrutor-modal-id');
-  var nomeEl = document.getElementById('instrutor-modal-nome');
-  var usuarioEl = document.getElementById('instrutor-modal-usuario');
-  var emailEl = document.getElementById('instrutor-modal-email');
-  var senhaEl = document.getElementById('instrutor-modal-senha');
-  var senhaReq = document.getElementById('instrutor-senha-req');
-  var errEl = document.getElementById('instrutor-modal-err');
-  var title = document.getElementById('modal-instrutor-title');
-  if (errEl) errEl.style.display = 'none';
-  if (title) title.textContent = inst ? 'Editar instrutor' : 'Criar instrutor';
-  if (idEl) idEl.value = inst ? inst.id : '';
-  if (nomeEl) nomeEl.value = inst ? (inst.nome || '') : '';
-  if (usuarioEl) usuarioEl.value = inst ? (inst.usuario || '') : '';
-  if (emailEl) emailEl.value = inst ? (inst.email || '') : '';
-  if (senhaEl) senhaEl.value = '';
-  if (senhaReq) senhaReq.textContent = inst ? '(opcional)' : '*';
-  openModal('modal-instrutor');
-  setTimeout(function(){ if(nomeEl) nomeEl.focus(); }, 80);
-}
-function editarInstrutor(id){ abrirModalInstrutor(id); }
-function salvarInstrutorModal(){
-  var id = document.getElementById('instrutor-modal-id').value;
-  var nome = document.getElementById('instrutor-modal-nome').value.trim();
-  var usuario = document.getElementById('instrutor-modal-usuario').value.trim();
-  var email = document.getElementById('instrutor-modal-email').value.trim();
-  var senha = document.getElementById('instrutor-modal-senha').value;
-  var errEl = document.getElementById('instrutor-modal-err');
-  if (errEl) errEl.style.display = 'none';
-  if (!nome || !usuario || !email) {
-    if (errEl) { errEl.textContent = 'Informe nome, usuário/login e e-mail do instrutor.'; errEl.style.display = 'block'; }
-    return;
-  }
-  if (!Validators.email(email)) {
-    if (errEl) { errEl.textContent = 'Informe um e-mail válido.'; errEl.style.display = 'block'; }
-    return;
-  }
-  if (!id && (!senha || senha.length < 6)) {
-    if (errEl) { errEl.textContent = 'A senha inicial deve ter no mínimo 6 caracteres.'; errEl.style.display = 'block'; }
-    return;
-  }
-  if (id && senha && senha.length < 6) {
-    if (errEl) { errEl.textContent = 'A nova senha deve ter no mínimo 6 caracteres.'; errEl.style.display = 'block'; }
-    return;
-  }
-  var s = getStore();
-  var todos = allUsuarios(s);
-  var loginDuplicado = todos.some(function(u){ return u.id !== id && String(u.usuario || '').toLowerCase() === usuario.toLowerCase(); });
-  var emailDuplicado = todos.some(function(u){ return u.id !== id && String(u.email || '').toLowerCase() === email.toLowerCase(); });
-  if (loginDuplicado) {
-    if (errEl) { errEl.textContent = 'Já existe um usuário com esse login.'; errEl.style.display = 'block'; }
-    return;
-  }
-  if (emailDuplicado) {
-    if (errEl) { errEl.textContent = 'Já existe um usuário com esse e-mail.'; errEl.style.display = 'block'; }
-    return;
-  }
-  if (id) {
-    var inst = s.instrutores.find(function(x){ return x.id === id; });
-    if (inst) {
-      inst.nome = nome;
-      inst.usuario = usuario;
-      inst.email = email;
-      inst.role = 'instrutor';
-      inst.unidadeId = _sess.unidadeId;
-      if (senha) inst.senha = senha;
-    }
-  } else {
-    s.instrutores.push({ id:genId('usr'), nome:nome, usuario:usuario, email:email, senha:senha, role:'instrutor', unidadeId:_sess.unidadeId, disciplina:'', turmas:[], turmaIds:[] });
-  }
-  saveStore(s).then(function(){
-    closeModal('modal-instrutor');
-    toast('Instrutor salvo com sucesso.', 'success');
-    renderInstrutores();
-    popularSelectsCursosTurmas();
-    renderTurmas();
-  }).catch(function(err){
-    if (errEl) { errEl.textContent = err && err.message ? err.message : 'Não foi possível salvar o instrutor no banco.'; errEl.style.display = 'block'; }
-  });
-}
-
-function popularSelectsCursosTurmas(){
-  var s = getStore();
-  var cursos = cursosDaUnidade();
-  var cursoOptions = cursos.map(function(c){ return '<option value="' + c.id + '">' + escape(c.nome) + '</option>'; }).join('');
-
-  ['turma-modal-curso'].forEach(function(id){
-    var sel = document.getElementById(id);
-    if (sel) {
-      var html = cursoOptions || '<option value="">Cadastre um curso primeiro</option>';
-      if (typeof sapSetSelectOptions === 'function') sapSetSelectOptions(sel, html);
-      else sel.innerHTML = html;
-    }
-  });
-
-  var instOptions = '<option value="">Sem instrutor</option>' + s.instrutores
-    .filter(function(i){ return !i.unidadeId || i.unidadeId === _sess.unidadeId; })
-    .map(function(i){ return '<option value="' + i.id + '">' + escape(i.nome) + '</option>'; }).join('');
-  ['turma-modal-instrutor'].forEach(function(id){
-    var sel = document.getElementById(id);
-    if (sel) {
-      if (typeof sapSetSelectOptions === 'function') sapSetSelectOptions(sel, instOptions);
-      else sel.innerHTML = instOptions;
-    }
-  });
-  popularCursosAlunoCadastro();
-}
-
-function renderCursos(){
-  var s = getStore(), tb = document.getElementById('tbody-cursos'); if(!tb) return;
-  popularSelectsCursosTurmas();
-  var q = (document.getElementById('busca-curso') ? document.getElementById('busca-curso').value : '').toLowerCase().trim();
-  var cursos = cursosDaUnidade().filter(function(c){
-    var texto = [c.nome, c.tipoAprendizagem, c.descricao, nomeUnidade(c.unidadeId)].join(' ').toLowerCase();
-    return !q || texto.indexOf(q) >= 0;
-  });
-  tb.innerHTML = cursos.map(function(c){
-    return '<tr><td><strong>' + escape(c.nome) + '</strong></td>'
-      + '<td>' + escape(c.tipoAprendizagem || '—') + '</td>'
-      + '<td>' + escape(nomeUnidade(c.unidadeId)) + '</td>'
-      + '<td>' + escape(c.descricao || '—') + '</td>'
-      + '<td><button class="btn btn-outline btn-sm" onclick="editarCurso(&quot;' + c.id + '&quot;)">Editar</button> '
-      + '<button class="btn btn-danger btn-sm" onclick="excluirCurso(&quot;' + c.id + '&quot;)">Excluir</button></td></tr>';
-  }).join('') || '<tr><td colspan="5" style="text-align:center;padding:28px;color:var(--gray-400)">Nenhum curso encontrado.</td></tr>';
-}
-
-function abrirModalCurso(id){
-  var s = getStore();
-  var c = id ? s.cursos.find(function(x){ return x.id === id; }) : null;
-  var idEl = document.getElementById('curso-modal-id');
-  var nomeEl = document.getElementById('curso-modal-nome');
-  var tipoEl = document.getElementById('curso-modal-tipo');
-  var descEl = document.getElementById('curso-modal-desc');
-  var errEl = document.getElementById('curso-modal-err');
-  var title = document.getElementById('modal-curso-title');
-  if (errEl) errEl.style.display = 'none';
-  if (title) title.textContent = c ? 'Editar curso' : 'Criar curso';
-  if (idEl) idEl.value = c ? c.id : '';
-  if (nomeEl) nomeEl.value = c ? (c.nome || '') : '';
-  if (tipoEl) tipoEl.value = c ? (c.tipoAprendizagem || '') : '';
-  if (descEl) descEl.value = c ? (c.descricao || '') : '';
-  openModal('modal-curso');
-  setTimeout(function(){ if(nomeEl) nomeEl.focus(); }, 80);
-}
-function editarCurso(id){ abrirModalCurso(id); }
-function salvarCursoModal(){
-  var id = document.getElementById('curso-modal-id').value;
-  var nome = document.getElementById('curso-modal-nome').value.trim();
-  var tipo = document.getElementById('curso-modal-tipo').value.trim();
-  var desc = document.getElementById('curso-modal-desc').value.trim();
-  var errEl = document.getElementById('curso-modal-err');
-  if (errEl) errEl.style.display = 'none';
-  if (!nome || !tipo) {
-    if (errEl) { errEl.textContent = 'Informe o nome do curso e o tipo de aprendizagem.'; errEl.style.display = 'block'; }
-    return;
-  }
-  var s = getStore();
-  var duplicado = cursosDaUnidade().some(function(c){ return c.id !== id && String(c.nome || '').toLowerCase() === nome.toLowerCase(); });
-  if (duplicado) {
-    if (errEl) { errEl.textContent = 'Já existe um curso com esse nome nesta unidade.'; errEl.style.display = 'block'; }
-    return;
-  }
-  if (id) {
-    var c = s.cursos.find(function(x){ return x.id === id; });
-    if (c) { c.nome = nome; c.tipoAprendizagem = tipo; c.descricao = desc; }
-  } else {
-    s.cursos.push({ id:genId('cur'), nome:nome, tipoAprendizagem:tipo, descricao:desc, unidadeId:_sess.unidadeId, ativo:true });
-  }
-  saveStore(s).then(function(){
-    closeModal('modal-curso');
-    toast('Curso salvo com sucesso.', 'success');
-    renderCursos(); renderTurmas(); popularCursosAlunoCadastro();
-  }).catch(function(err){
-    if (errEl) { errEl.textContent = err && err.message ? err.message : 'Não foi possível salvar o curso no banco.'; errEl.style.display = 'block'; }
-  });
-}
-function excluirCurso(id){
-  var s = getStore();
-  var usado = s.turmas.some(function(t){ return t.cursoId === id; });
-  if (usado && !confirm('Este curso possui turmas vinculadas. Excluir mesmo assim?')) return;
-  if (!usado && !confirm('Excluir este curso?')) return;
-  s.cursos = s.cursos.filter(function(c){ return c.id !== id; });
-  s.turmas = s.turmas.filter(function(t){ return t.cursoId !== id; });
-  saveStore(s).then(function(){ renderCursos(); renderTurmas(); popularCursosAlunoCadastro(); });
-}
-
-function renderTurmas(){
-  var s = getStore(), tb = document.getElementById('tbody-turmas'); if(!tb) return;
-  popularSelectsCursosTurmas();
-  var q = (document.getElementById('busca-turma') ? document.getElementById('busca-turma').value : '').toLowerCase().trim();
-  var turmas = turmasDaUnidade().filter(function(t){
-    var inst = s.instrutores.find(function(i){ return i.id === t.instrutorId; });
-    var texto = [t.nome, t.curso || nomeCurso(t.cursoId), t.turno, inst ? inst.nome : ''].join(' ').toLowerCase();
-    return !q || texto.indexOf(q) >= 0;
-  });
-  tb.innerHTML = turmas.map(function(t){
-    var inst = s.instrutores.find(function(i){ return i.id === t.instrutorId; });
-    return '<tr><td><strong>' + escape(t.nome) + '</strong></td>'
-      + '<td>' + escape(t.curso || nomeCurso(t.cursoId)) + '</td>'
-      + '<td>' + turnoLabel(t.turno) + '</td>'
-      + '<td>' + escape(inst ? inst.nome : '—') + '</td>'
-      + '<td><button class="btn btn-outline btn-sm" onclick="editarTurma(&quot;' + t.id + '&quot;)">Editar</button> '
-      + '<button class="btn btn-danger btn-sm" onclick="excluirTurma(&quot;' + t.id + '&quot;)">Excluir</button></td></tr>';
-  }).join('') || '<tr><td colspan="5" style="text-align:center;padding:28px;color:var(--gray-400)">Nenhuma turma encontrada.</td></tr>';
-}
-function nomeCurso(id){ var c = getStore().cursos.find(function(x){ return x.id === id; }); return c ? c.nome : '—'; }
-function abrirModalTurma(id){
-  popularSelectsCursosTurmas();
-  var s = getStore();
-  var t = id ? s.turmas.find(function(x){ return x.id === id; }) : null;
-  var idEl = document.getElementById('turma-modal-id');
-  var nomeEl = document.getElementById('turma-modal-nome');
-  var cursoEl = document.getElementById('turma-modal-curso');
-  var turnoEl = document.getElementById('turma-modal-turno');
-  var instEl = document.getElementById('turma-modal-instrutor');
-  var errEl = document.getElementById('turma-modal-err');
-  var title = document.getElementById('modal-turma-title');
-  if (errEl) errEl.style.display = 'none';
-  if (title) title.textContent = t ? 'Editar turma' : 'Criar turma';
-  if (idEl) idEl.value = t ? t.id : '';
-  if (nomeEl) nomeEl.value = t ? (t.nome || '') : '';
-  if (cursoEl) cursoEl.value = t ? (t.cursoId || '') : (cursoEl.options[0] ? cursoEl.options[0].value : '');
-  if (turnoEl) turnoEl.value = t ? (t.turno || 'tarde') : 'tarde';
-  if (instEl) instEl.value = t ? (t.instrutorId || '') : '';
-  openModal('modal-turma');
-  setTimeout(function(){ if(nomeEl) nomeEl.focus(); }, 80);
-}
-function editarTurma(id){ abrirModalTurma(id); }
-function salvarTurmaModal(){
-  var id = document.getElementById('turma-modal-id').value;
-  var nome = document.getElementById('turma-modal-nome').value.trim();
-  var cursoId = document.getElementById('turma-modal-curso').value;
-  var turno = document.getElementById('turma-modal-turno').value;
-  var instrutorId = document.getElementById('turma-modal-instrutor').value;
-  var errEl = document.getElementById('turma-modal-err');
-  if (errEl) errEl.style.display = 'none';
-  if (!nome || !cursoId || !turno) {
-    if (errEl) { errEl.textContent = 'Informe nome da turma, curso e turno.'; errEl.style.display = 'block'; }
-    return;
-  }
-  var s = getStore();
-  var curso = s.cursos.find(function(c){ return c.id === cursoId; });
-  if (!curso) {
-    if (errEl) { errEl.textContent = 'Curso não encontrado. Cadastre ou selecione um curso válido.'; errEl.style.display = 'block'; }
-    return;
-  }
-  var duplicada = turmasDaUnidade().some(function(t){ return t.id !== id && String(t.nome || '').toLowerCase() === nome.toLowerCase() && t.cursoId === cursoId; });
-  if (duplicada) {
-    if (errEl) { errEl.textContent = 'Já existe uma turma com esse nome para este curso.'; errEl.style.display = 'block'; }
-    return;
-  }
-  if (id) {
-    var t = s.turmas.find(function(x){ return x.id === id; });
-    if (t) { t.nome = nome; t.cursoId = cursoId; t.curso = curso.nome; t.turno = turno; t.instrutorId = instrutorId || null; }
-  } else {
-    s.turmas.push({ id:genId('tur'), nome:nome, cursoId:cursoId, curso:curso.nome, turno:turno, unidadeId:_sess.unidadeId, instrutorId:instrutorId || null, ativo:true });
-  }
-  saveStore(s).then(function(){
-    closeModal('modal-turma');
-    toast('Turma salva com sucesso.', 'success');
-    renderTurmas(); popularCursosAlunoCadastro();
-  }).catch(function(err){
-    if (errEl) { errEl.textContent = err && err.message ? err.message : 'Não foi possível salvar a turma no banco.'; errEl.style.display = 'block'; }
-  });
-}
-function excluirTurma(id){
-  if(!confirm('Excluir esta turma?')) return;
-  var s = getStore();
-  s.turmas = s.turmas.filter(function(t){ return t.id !== id; });
-  saveStore(s).then(function(){ renderTurmas(); popularCursosAlunoCadastro(); });
-}
-
-function popularCursosAlunoCadastro(){
-  var sel = document.getElementById('cad-curso');
-  if (!sel) return;
-  var atual = sel.value;
-  var cursos = cursosDaUnidade();
-  var html = '<option value="">Selecione um curso cadastrado...</option>' + cursos.map(function(c){ return '<option value="' + c.id + '">' + escape(c.nome) + '</option>'; }).join('');
-  if (typeof sapSetSelectOptions === 'function') sapSetSelectOptions(sel, html, atual);
-  else { sel.innerHTML = html; if (atual && cursos.some(function(c){ return c.id === atual; })) sel.value = atual; }
-  popularTurmasAlunoCadastro();
-}
-function popularTurmasAlunoCadastro(){
-  var cursoId = document.getElementById('cad-curso') ? document.getElementById('cad-curso').value : '';
-  var sel = document.getElementById('cad-turma');
-  if (!sel) return;
-  var atual = sel.value;
-  var turmas = turmasDaUnidade().filter(function(t){ return !cursoId || t.cursoId === cursoId; });
-  var html = '<option value="">Selecione uma turma cadastrada...</option>' + turmas.map(function(t){ return '<option value="' + t.id + '">' + escape(t.nome) + ' — ' + turnoLabel(t.turno) + '</option>'; }).join('');
-  if (typeof sapSetSelectOptions === 'function') sapSetSelectOptions(sel, html, atual);
-  else { sel.innerHTML = html; if (atual && turmas.some(function(t){ return t.id === atual; })) sel.value = atual; else sel.value = ''; }
-  if (atual && !turmas.some(function(t){ return t.id === atual; })) sel.value = '';
-  atualizarTurnoAlunoPelaTurma();
-}
-function atualizarTurnoAlunoPelaTurma(){
-  var turmaId = document.getElementById('cad-turma') ? document.getElementById('cad-turma').value : '';
-  var turma = getStore().turmas.find(function(t){ return t.id === turmaId; });
-  var turnoEl = document.getElementById('cad-turno');
-  if (turnoEl && turma && turma.turno) turnoEl.value = Validators.normalizeTurno(turma.turno);
-}
-
-function initPainelCoordenacao() {
-  afterStoreReady(function(){ refreshActivePanel(); });
-  popularSelectAlunos();
-  popularCursosAlunoCadastro();
-  renderAlunos();
-  renderAtendimentos();
-  renderCursos(); renderTurmas();
-  renderInstrutores();
-}
-
-initPainelCoordenacao();
+/* Inicializa */
+afterStoreReady(function(){ refreshActivePanel(); });
 
 /* ── Modal Agendamento (Instrutor/Coord) ── */
 var _magAlunoId = null;
@@ -1198,7 +878,6 @@ function renderGraficos(alunos) {
     alunos = Permissions.getAlunosVisiveis(_sess, store.alunos);
   }
   var cores = ['#2d7ff9','#f97316','#10b981','#8b5cf6','#ef4444','#f59e0b','#06b6d4','#ec4899','#84cc16','#6366f1'];
-  /* Pizza - distribuição por curso */
   var cursosMap = {};
   alunos.forEach(function(a){ var c=alunoCursoNome(a, getStore()); cursosMap[c]=(cursosMap[c]||0)+1; });
   var cursos = Object.keys(cursosMap).sort();
@@ -1246,7 +925,6 @@ function renderGraficos(alunos) {
         +'</div>';
     }).join('');
   }
-  /* Linha - alunos por idade */
   var idadesMap={};
   alunos.forEach(function(a){ var id=calcIdade(a.dataNascimento); if(id!==null) idadesMap[id]=(idadesMap[id]||0)+1; });
   var idades=Object.keys(idadesMap).map(Number).sort(function(a,b){return a-b;});

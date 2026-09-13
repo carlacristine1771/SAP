@@ -28,7 +28,7 @@ function toggleTheme(){
 (function(){
   var s = getSession();
   if (!s) return;
-  var mapa = { administrador:'pages/painel-admin.html', psicologa:'pages/painel-psicologo.html', coordenacao:'pages/painel-coordenacao.html', instrutor:'pages/painel-instrutor.html' };
+  var mapa = { administrador:'/painel/admin', psicologa:'/painel/psicologo', coordenacao:'/painel/coordenacao', instrutor:'/painel/instrutor' };
   if (mapa[s.role]) window.location.href = mapa[s.role];
 })();
 
@@ -100,7 +100,7 @@ function doLogin() {
 
   login(_perfilAtual, u, p, unidadeId || null).then(function(resultado) {
     if (resultado.ok) {
-      var mapa = { administrador:'pages/painel-admin.html', psicologa:'pages/painel-psicologo.html', coordenacao:'pages/painel-coordenacao.html', instrutor:'pages/painel-instrutor.html' };
+      var mapa = { administrador:'/painel/admin', psicologa:'/painel/psicologo', coordenacao:'/painel/coordenacao', instrutor:'/painel/instrutor' };
       if (resultado.senhaTemporaria) {
         var nova = prompt('Este é seu primeiro acesso. Crie uma nova senha com pelo menos 6 caracteres:');
         if (!nova || nova.length < 6) { errEl.textContent='A nova senha deve ter pelo menos 6 caracteres.'; errEl.style.display='block'; return; }

@@ -276,7 +276,7 @@ function apiFetch(path, options) {
         if (resp.status === 401) {
           clearSession();
           if (!/\/auth\/(login|me)/.test(path)) {
-            setTimeout(function(){ window.location.href = window.location.pathname.indexOf('/pages/') >= 0 ? '../index.html' : 'index.html'; }, 0);
+            setTimeout(function(){ window.location.href = '/'; }, 0);
           }
         }
         throw new Error(apiExtractErrorMessage(data, resp.status));
@@ -737,7 +737,7 @@ function login(role, usuario, senha, unidadeId) {
 function logout() {
   apiFetch('/auth/logout', {method:'POST'}).catch(function(){}).finally(function(){
     clearSession();
-    window.location.href='../index.html';
+    window.location.href='/';
   });
 }
 
