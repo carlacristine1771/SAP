@@ -40,9 +40,11 @@ public class Usuario {
     @Column(nullable = false)
     private TipoUsuario tipoUsuario;
 
+    @Builder.Default
     @Column(nullable = false)
     private Boolean ativo = true;
 
+    @Builder.Default
     @Column(nullable = false)
     private Boolean senhaTemporaria = true;
 

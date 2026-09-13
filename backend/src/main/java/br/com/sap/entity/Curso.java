@@ -22,6 +22,7 @@ public class Curso {
     @Column(columnDefinition = "TEXT")
     private String descricao;
 
+    @Builder.Default
     @Column(nullable = false)
     private Boolean ativo = true;
 

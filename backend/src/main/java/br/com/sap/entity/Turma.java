@@ -21,6 +21,7 @@ public class Turma {
     @Column(nullable = false)
     private Turno turno;
 
+    @Builder.Default
     @Column(nullable = false)
     private Boolean ativo = true;
 
