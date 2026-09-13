@@ -588,7 +588,7 @@ function Appointments({ items, onOpen, onNew }) {
     );
   return (
     <div className="panel-section active fade-up">
-      <div className="data-table-wrap">
+      <div className="data-table-wrap mobile-record-list">
         <div className="data-table-head">
           <div className="data-table-title">Gerenciar Atendimentos</div>
           <div className="data-table-filters">
@@ -618,7 +618,7 @@ function Appointments({ items, onOpen, onNew }) {
             </select>
           </div>
         </div>
-        <table>
+        <table className="mobile-record-table">
           <thead>
             <tr>
               <th>Aluno</th>
@@ -633,22 +633,24 @@ function Appointments({ items, onOpen, onNew }) {
           <tbody>
             {visible.map((item) => (
               <tr key={item.id}>
-                <td>
+                <td data-label="Aluno">
                   <strong>{item.aluno}</strong>
                 </td>
-                <td>{item.descricao}</td>
-                <td>
+                <td data-label="Motivo">{item.descricao}</td>
+                <td data-label="Tipo / Data">
                   {item.tipoAtendimento || "—"}
                   <div className="td-sub">{fmtDate(item.dataAtendimento)}</div>
                 </td>
-                <td>{item.solicitante || "—"}</td>
-                <td>{item.psicologo || "Não definido"}</td>
-                <td>
+                <td data-label="Solicitado por">{item.solicitante || "—"}</td>
+                <td data-label="Profissional responsável">
+                  {item.psicologo || "Não definido"}
+                </td>
+                <td data-label="Status">
                   <span className={`badge ${STATUS[item.status]?.[1]}`}>
                     {STATUS[item.status]?.[0]}
                   </span>
                 </td>
-                <td>
+                <td className="record-actions-cell" data-label="Ações">
                   <button
                     className="btn btn-outline btn-sm"
                     onClick={() => onOpen(item)}
@@ -660,8 +662,12 @@ function Appointments({ items, onOpen, onNew }) {
               </tr>
             ))}
             {!visible.length && (
-              <tr>
-                <td colSpan="7" className="psych-empty-cell">
+              <tr className="record-empty-row">
+                <td
+                  colSpan="7"
+                  className="psych-empty-cell record-empty-cell"
+                  data-label=""
+                >
                   Nenhum atendimento
                 </td>
               </tr>
@@ -689,7 +695,7 @@ function Students({ students, appointments, onHistory, onSchedule }) {
     );
   return (
     <div className="panel-section active fade-up">
-      <div className="data-table-wrap">
+      <div className="data-table-wrap mobile-record-list">
         <div className="data-table-head">
           <div className="data-table-title">Tabela de Alunos</div>
           <div className="search-box">
@@ -718,7 +724,7 @@ function Students({ students, appointments, onHistory, onSchedule }) {
             ))}
           </div>
         </div>
-        <table>
+        <table className="mobile-record-table">
           <thead>
             <tr>
               <th>Aluno</th>
@@ -734,35 +740,35 @@ function Students({ students, appointments, onHistory, onSchedule }) {
           <tbody>
             {visible.map((item) => (
               <tr key={item.id}>
-                <td>
+                <td data-label="Aluno">
                   <strong>{item.nome}</strong>
                   <div className="td-sub">{item.cpf}</div>
                 </td>
-                <td>
+                <td data-label="Matrícula">
                   <code>{String(item.id).padStart(6, "0")}</code>
                 </td>
-                <td>
+                <td data-label="Curso / Turma">
                   {item.curso || "—"}
                   <div className="td-sub">{item.turma || "—"}</div>
                 </td>
-                <td>{age(item.dataNascimento)} anos</td>
-                <td>
+                <td data-label="Idade">{age(item.dataNascimento)} anos</td>
+                <td data-label="Nascimento">
                   {new Date(
                     `${item.dataNascimento}T12:00:00`,
                   ).toLocaleDateString("pt-BR")}
                 </td>
-                <td>
+                <td data-label="PCD">
                   {/PCD:\s*Sim/i.test(item.observacoes || "") ? "Sim" : "Não"}
                 </td>
-                <td>
+                <td data-label="Atendimentos">
                   {
                     appointments.filter(
                       (entry) => Number(entry.alunoId) === Number(item.id),
                     ).length
                   }
                 </td>
-                <td>
-                  <div style={{ display: "flex", gap: 6 }}>
+                <td className="record-actions-cell" data-label="Ações">
+                  <div className="record-actions">
                     <button
                       className="btn btn-outline btn-sm"
                       onClick={() => onHistory(item)}
@@ -779,6 +785,17 @@ function Students({ students, appointments, onHistory, onSchedule }) {
                 </td>
               </tr>
             ))}
+            {!visible.length && (
+              <tr className="record-empty-row">
+                <td
+                  colSpan="8"
+                  className="psych-empty-cell record-empty-cell"
+                  data-label=""
+                >
+                  Nenhum aluno
+                </td>
+              </tr>
+            )}
           </tbody>
         </table>
       </div>

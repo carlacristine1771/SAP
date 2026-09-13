@@ -304,7 +304,7 @@ function Students({ students, appointments, onNew, onRefer }) {
   );
   return (
     <div className="panel-section active fade-up">
-      <div className="data-table-wrap">
+      <div className="data-table-wrap mobile-record-list">
         <div className="data-table-head">
           <div className="data-table-title">Alunos Cadastrados</div>
           <button className="btn btn-orange btn-sm" onClick={onNew}>
@@ -322,7 +322,7 @@ function Students({ students, appointments, onNew, onRefer }) {
             />
           </div>
         </div>
-        <table>
+        <table className="mobile-record-table">
           <thead>
             <tr>
               <th>Aluno</th>
@@ -337,35 +337,35 @@ function Students({ students, appointments, onNew, onRefer }) {
           <tbody>
             {visible.map((student) => (
               <tr key={student.id}>
-                <td>
+                <td data-label="Aluno">
                   <strong>{student.nome}</strong>
                   <div className="td-sub">{student.cpf}</div>
                 </td>
-                <td>
+                <td data-label="Matrícula">
                   <code>{String(student.id).padStart(6, "0")}</code>
                 </td>
-                <td>
+                <td data-label="Curso / Turma">
                   {student.curso || "—"}
                   <div className="td-sub">
                     {student.turma || "—"} · {TURN[student.turno]}
                   </div>
                 </td>
-                <td>
+                <td data-label="Status">
                   <span
                     className={`badge ${student.ativo === false ? "badge-cancel" : "badge-done"}`}
                   >
                     {student.ativo === false ? "Inativo" : "Ativo"}
                   </span>
                 </td>
-                <td>{student.responsavel || "—"}</td>
-                <td>
+                <td data-label="Responsável">{student.responsavel || "—"}</td>
+                <td data-label="Atendimentos">
                   {
                     appointments.filter(
                       (item) => Number(item.alunoId) === Number(student.id),
                     ).length
                   }
                 </td>
-                <td>
+                <td className="record-actions-cell" data-label="Ações">
                   <button
                     type="button"
                     className="btn btn-outline btn-sm"
@@ -377,8 +377,10 @@ function Students({ students, appointments, onNew, onRefer }) {
               </tr>
             ))}
             {!visible.length && (
-              <tr>
+              <tr className="record-empty-row">
                 <td
+                  className="record-empty-cell"
+                  data-label=""
                   colSpan="7"
                   style={{
                     textAlign: "center",
@@ -564,7 +566,7 @@ function Appointments({ appointments }) {
     );
   return (
     <div className="panel-section active fade-up">
-      <div className="data-table-wrap">
+      <div className="data-table-wrap mobile-record-list">
         <div className="data-table-head">
           <div className="data-table-title">Atendimentos Encaminhados</div>
           <div className="data-table-filters">
@@ -590,7 +592,7 @@ function Appointments({ appointments }) {
             </select>
           </div>
         </div>
-        <table>
+        <table className="mobile-record-table">
           <thead>
             <tr>
               <th>Aluno</th>
@@ -604,23 +606,25 @@ function Appointments({ appointments }) {
           <tbody>
             {visible.map((item) => (
               <tr key={item.id}>
-                <td>
+                <td data-label="Aluno">
                   <strong>{item.aluno}</strong>
                 </td>
-                <td>{item.descricao}</td>
-                <td>{item.tipoAtendimento || "—"}</td>
-                <td>{item.solicitante || "—"}</td>
-                <td>
+                <td data-label="Motivo">{item.descricao}</td>
+                <td data-label="Tipo">{item.tipoAtendimento || "—"}</td>
+                <td data-label="Agendado por">{item.solicitante || "—"}</td>
+                <td data-label="Status">
                   <span className={`badge ${STATUS[item.status]?.[1]}`}>
                     {STATUS[item.status]?.[0] || item.status}
                   </span>
                 </td>
-                <td>{fmtDate(item.dataAtendimento)}</td>
+                <td data-label="Data">{fmtDate(item.dataAtendimento)}</td>
               </tr>
             ))}
             {!visible.length && (
-              <tr>
+              <tr className="record-empty-row">
                 <td
+                  className="record-empty-cell"
+                  data-label=""
                   colSpan="6"
                   style={{
                     textAlign: "center",

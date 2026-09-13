@@ -31,6 +31,16 @@ export default function PanelShell({
   useEffect(() => {
     document.title = "Painel Administrador — SAP SENAC DF";
   }, []);
+  useEffect(() => {
+    if (
+      typeof window.matchMedia !== "function" ||
+      !window.matchMedia("(max-width: 900px)").matches
+    )
+      return;
+    document
+      .querySelector(".sidebar-nav .nav-link.active")
+      ?.scrollIntoView({ block: "nearest", inline: "center" });
+  }, [activePanel]);
 
   const logout = async () => {
     try {
@@ -128,6 +138,15 @@ export default function PanelShell({
                 aria-label="Alternar tema claro e escuro"
               >
                 <Icon name={theme === "dark" ? "sun" : "moon"} />
+              </button>
+              <button
+                type="button"
+                className="mobile-logout"
+                onClick={logout}
+                title="Sair"
+                aria-label="Sair"
+              >
+                <Icon name="logout" strokeWidth={1.8} />
               </button>
               <button
                 type="button"

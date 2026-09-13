@@ -356,7 +356,7 @@ export default function PsychologyCalendar({
               ))}
             </div>
             <button
-              className="btn btn-outline btn-sm"
+              className="btn btn-outline btn-sm psych-calendar-step"
               aria-label="Período anterior"
               onClick={() => move(-1)}
             >
@@ -364,27 +364,27 @@ export default function PsychologyCalendar({
             </button>
             <span className="psych-calendar-title">{title}</span>
             <button
-              className="btn btn-outline btn-sm"
+              className="btn btn-outline btn-sm psych-calendar-step"
               aria-label="Próximo período"
               onClick={() => move(1)}
             >
               ›
             </button>
             <button
-              className="btn btn-outline btn-sm"
+              className="btn btn-outline btn-sm psych-calendar-today"
               onClick={() => setCursor(new Date())}
             >
               Hoje
             </button>
             <button
-              className="btn btn-outline btn-sm"
+              className="btn btn-outline btn-sm psych-calendar-create"
               onClick={() => onNewEvent(cursor)}
             >
               <Icon name="plus" />
               Novo Evento
             </button>
             <button
-              className="btn btn-orange btn-sm"
+              className="btn btn-orange btn-sm psych-calendar-create"
               onClick={() => onNewAppointment(cursor)}
             >
               <Icon name="plus" />

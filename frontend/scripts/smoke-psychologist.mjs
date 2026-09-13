@@ -82,7 +82,20 @@ const artifactDirectory = resolve('.artifacts'); mkdirSync(artifactDirectory, { 
 const desktop = await call('Page.captureScreenshot', { format: 'png', captureBeyondViewport: false });
 writeFileSync(resolve(artifactDirectory, 'psychologist-desktop.png'), Buffer.from(desktop.data, 'base64'));
 await call('Emulation.setDeviceMetricsOverride', { width: 390, height: 844, deviceScaleFactor: 1, mobile: true }); await delay(250);
-const mobileMetrics = await evaluate(`({viewport:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,topbarHeight:Math.round(document.querySelector('.topbar').getBoundingClientRect().height),navVisible:getComputedStyle(document.querySelector('.sidebar')).display!=='none'})`);
+const mobileMetrics = await evaluate(`(async()=>{
+  const sidebar=document.querySelector('.sidebar');
+  const nav=document.querySelector('.sidebar-nav');
+  const firstButton=document.querySelector('.nav-link');
+  const sidebarRect=sidebar.getBoundingClientRect();
+  const firstRect=firstButton.getBoundingClientRect();
+  const hit=document.elementFromPoint(firstRect.left+firstRect.width/2,firstRect.top+firstRect.height/2)?.closest('.nav-link');
+  const click=(label)=>[...document.querySelectorAll('.nav-link')].find((item)=>item.textContent.includes(label))?.click();
+  click('Chat');await new Promise((resolve)=>setTimeout(resolve,100));
+  const chatTitle=document.querySelector('.topbar-page-title')?.textContent;
+  nav.scrollLeft=nav.scrollWidth;await new Promise((resolve)=>setTimeout(resolve,50));
+  const navScrolled=nav.scrollLeft>0;
+  click('Calendário');await new Promise((resolve)=>setTimeout(resolve,100));
+  return{viewport:document.documentElement.clientWidth,scrollWidth:document.documentElement.scrollWidth,topbarHeight:Math.round(document.querySelector('.topbar').getBoundingClientRect().height),navVisible:getComputedStyle(sidebar).display!=='none'&&sidebarRect.width>0&&sidebarRect.bottom>0&&sidebarRect.top<innerHeight,navBottom:Math.round(sidebarRect.bottom),viewportHeight:innerHeight,firstItemTouchable:Boolean(hit),navScrollable:nav.scrollWidth>nav.clientWidth,navScrolled,chatTitle,finalTitle:document.querySelector('.topbar-page-title')?.textContent,logoutVisible:getComputedStyle(document.querySelector('.mobile-logout')).display!=='none'}})()`);
 const mobile = await call('Page.captureScreenshot', { format: 'png', captureBeyondViewport: false });
 writeFileSync(resolve(artifactDirectory, 'psychologist-mobile.png'), Buffer.from(mobile.data, 'base64'));
 process.stdout.write(`${JSON.stringify({ ...summary, mobileMetrics, browserErrors }, null, 2)}\n`);
