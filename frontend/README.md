@@ -21,6 +21,7 @@ as chamadas REST ao backend configurado em `VITE_DEV_API_TARGET`.
 
 ```bash
 npm test
+npm run test:e2e
 npm run build
 ```
 
@@ -35,9 +36,13 @@ da origem do frontend.
 
 - `/` — página inicial e autenticação
 - `/painel/admin`
+- `/painel/admin/:aba`
 - `/painel/psicologo`
+- `/painel/psicologo/:aba`
 - `/painel/coordenacao`
+- `/painel/coordenacao/:aba`
 - `/painel/instrutor`
+- `/painel/instrutor/:aba`
 
 As páginas HTML antigas redirecionam para estas rotas para preservar favoritos.
 
@@ -46,3 +51,12 @@ As páginas HTML antigas redirecionam para estas rotas para preservar favoritos.
 Os painéis são componentes React nativos. Os estilos institucionais preservados
 ficam em `public/css`, enquanto as URLs antigas são redirecionadas pelo React
 Router para manter a compatibilidade com favoritos existentes.
+
+## Infraestrutura React
+
+- TanStack Query para cache, mutações e atualização automática das listas.
+- React Hook Form e Zod para formulários e validações compartilhadas.
+- Proteção contra fechamento ou atualização com dados ainda não salvos.
+- Paginação no servidor em `/alunos/paginados` e
+  `/atendimentos/paginados`.
+- Playwright para fluxos completos em desktop e viewport móvel.

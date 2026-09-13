@@ -108,6 +108,15 @@ const appointments = [
     createdAt: dateTime,
   },
 ];
+const pageResponse = (content) => ({
+  content,
+  page: 0,
+  size: 20,
+  totalElements: content.length,
+  totalPages: content.length ? 1 : 0,
+  first: true,
+  last: true,
+});
 const commonResponses = {
   "/unidades": [
     {
@@ -124,7 +133,9 @@ const commonResponses = {
     },
   ],
   "/alunos": students,
+  "/alunos/paginados": pageResponse(students),
   "/atendimentos": appointments,
+  "/atendimentos/paginados": pageResponse(appointments),
   "/cursos": [
     { id: 1, nome: "Técnico em Administração", unidadeId: 1 },
     { id: 2, nome: "Aprendizagem Profissional", unidadeId: 1 },

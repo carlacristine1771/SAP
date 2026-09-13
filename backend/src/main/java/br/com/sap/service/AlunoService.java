@@ -14,6 +14,8 @@ import br.com.sap.repository.TurmaRepository;
 import br.com.sap.repository.UnidadeRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -38,6 +40,27 @@ public class AlunoService {
 
     public List<AlunoResponseDTO> listarPorTurmasDoInstrutor(Long instrutorId) {
         return alunoRepository.findByTurmaInstrutorId(instrutorId).stream().map(this::converterParaDTO).toList();
+    }
+
+    public Page<AlunoResponseDTO> listarPaginado(String busca, Pageable pageable) {
+        return alunoRepository.pesquisar(normalizarBusca(busca), pageable)
+                .map(this::converterParaDTO);
+    }
+
+    public Page<AlunoResponseDTO> listarPorUnidadePaginado(Long unidadeId, String busca, Pageable pageable) {
+        return alunoRepository.pesquisarPorUnidade(
+                unidadeId, normalizarBusca(busca), pageable
+        ).map(this::converterParaDTO);
+    }
+
+    public Page<AlunoResponseDTO> listarPorTurmasDoInstrutorPaginado(Long instrutorId, String busca, Pageable pageable) {
+        return alunoRepository.pesquisarPorInstrutor(
+                instrutorId, normalizarBusca(busca), pageable
+        ).map(this::converterParaDTO);
+    }
+
+    private String normalizarBusca(String busca) {
+        return busca == null ? "" : busca.trim();
     }
 
     public AlunoResponseDTO buscarPorId(Long id) {

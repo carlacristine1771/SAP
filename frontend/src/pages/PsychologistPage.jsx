@@ -1,13 +1,27 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { api } from "../api/client.ts";
-import { usePanelQuery, useSessionQuery } from "../api/panelQueries.ts";
+import {
+  usePanelMutation,
+  usePaginatedPanelQuery,
+  usePanelQuery,
+  useSessionQuery,
+} from "../api/panelQueries.ts";
 import { backendRoleToFrontend } from "../auth/session.ts";
+import { usePanelRoute } from "../hooks/usePanelRoute.ts";
+import { useUnsavedChanges } from "../hooks/useUnsavedChanges.ts";
+import { useDebouncedValue } from "../hooks/useDebouncedValue.ts";
+import {
+  appointmentSchema,
+  eventSchema,
+  validationMessage,
+} from "../validation/schemas.ts";
 import ChatPanel from "../components/panel/ChatPanel.jsx";
 import DashboardCharts from "../components/panel/DashboardCharts.jsx";
 import Icon from "../components/panel/Icon.jsx";
 import PsychologistShell from "../components/panel/PsychologistShell.jsx";
 import PsychologyCalendar from "../components/psychologist/PsychologyCalendar.tsx";
 import AccessibleModal from "../components/ui/AccessibleModal.tsx";
+import Pagination from "../components/ui/Pagination.tsx";
 import {
   ErrorMessage,
   FatalScreen,
@@ -44,6 +58,15 @@ const EMPTY = {
   messages: [],
   events: [],
 };
+const PSYCHOLOGIST_PANELS = [
+  "dashboard",
+  "indicativos",
+  "historico",
+  "atendimentos",
+  "alunos",
+  "calendario",
+  "chat",
+];
 async function fetchPsychologistData() {
   const [students, appointments, users, messages, events] = await Promise.all([
     api.get("/alunos"),
@@ -577,8 +600,17 @@ function History({ appointments, onSelectYear }) {
 
 function Appointments({ items, onOpen, onNew }) {
   const [search, setSearch] = useState(""),
-    [status, setStatus] = useState("");
-  const visible = items
+    [status, setStatus] = useState(""),
+    [page, setPage] = useState(0);
+  const debouncedSearch = useDebouncedValue(search);
+  useEffect(() => setPage(0), [search, status]);
+  const pageQuery = usePaginatedPanelQuery(
+    "atendimentos",
+    page,
+    debouncedSearch,
+    status,
+  );
+  const localVisible = items
     .filter((item) => !status || item.status === status)
     .filter((item) =>
       [item.aluno, item.descricao, item.solicitante, item.psicologo]
@@ -586,6 +618,7 @@ function Appointments({ items, onOpen, onNew }) {
         .toLowerCase()
         .includes(search.toLowerCase()),
     );
+  const visible = pageQuery.data?.content ?? localVisible;
   return (
     <div className="panel-section active fade-up">
       <div className="data-table-wrap mobile-record-list">
@@ -674,6 +707,13 @@ function Appointments({ items, onOpen, onNew }) {
             )}
           </tbody>
         </table>
+        <Pagination
+          page={pageQuery.data?.page || 0}
+          totalPages={pageQuery.data?.totalPages || 0}
+          totalElements={pageQuery.data?.totalElements || visible.length}
+          loading={pageQuery.isFetching}
+          onChange={setPage}
+        />
       </div>
     </div>
   );
@@ -681,8 +721,13 @@ function Appointments({ items, onOpen, onNew }) {
 
 function Students({ students, appointments, onHistory, onSchedule }) {
   const [search, setSearch] = useState(""),
-    [tab, setTab] = useState("todos");
-  const visible = students
+    [tab, setTab] = useState("todos"),
+    [page, setPage] = useState(0);
+  const debouncedSearch = useDebouncedValue(search);
+  useEffect(() => setPage(0), [search, tab]);
+  const pageQuery = usePaginatedPanelQuery("alunos", page, debouncedSearch);
+  const source = pageQuery.data?.content ?? students;
+  const visible = source
     .filter((item) => {
       const years = age(item.dataNascimento);
       return tab === "todos" || (tab === "menores" ? years < 18 : years >= 18);
@@ -798,20 +843,33 @@ function Students({ students, appointments, onHistory, onSchedule }) {
             )}
           </tbody>
         </table>
+        <Pagination
+          page={pageQuery.data?.page || 0}
+          totalPages={pageQuery.data?.totalPages || 0}
+          totalElements={pageQuery.data?.totalElements || visible.length}
+          loading={pageQuery.isFetching}
+          onChange={setPage}
+        />
       </div>
     </div>
   );
 }
 
 export default function PsychologistPage() {
-  const [panel, setPanel] = useState("dashboard"),
+  const { activePanel: panel, navigate: navigateRoute } = usePanelRoute({
+      role: "psicologo",
+      defaultPanel: "dashboard",
+      allowedPanels: PSYCHOLOGIST_PANELS,
+    }),
     [toasts, setToasts] = useState([]),
     [appointment, setAppointment] = useState(null),
     [appointmentForm, setAppointmentForm] = useState({}),
+    [appointmentDirty, setAppointmentDirty] = useState(false),
     [appointmentError, setAppointmentError] = useState(""),
     [historyStudent, setHistoryStudent] = useState(null),
     [event, setEvent] = useState(null),
     [eventForm, setEventForm] = useState({}),
+    [eventDirty, setEventDirty] = useState(false),
     [eventError, setEventError] = useState(""),
     [indicatorYear, setIndicatorYear] = useState(null);
   const toast = useCallback((text, type = "info") => {
@@ -826,16 +884,19 @@ export default function PsychologistPage() {
   const session = sessionQuery.data;
   const authorized =
     backendRoleToFrontend(session?.tipoUsuario) === "psicologa";
+  const panelQueryName = `psicologia:${session?.id || "pending"}`;
   const dataQuery = usePanelQuery(
-    `psicologia:${session?.id || "pending"}`,
+    panelQueryName,
     Boolean(session && authorized),
     fetchPsychologistData,
   );
+  const dataMutation = usePanelMutation(panelQueryName);
   const data = dataQuery.data || EMPTY;
   const refreshPanel = dataQuery.refetch;
   const loadData = useCallback(async () => {
     await refreshPanel();
   }, [refreshPanel]);
+  const confirmDiscard = useUnsavedChanges(appointmentDirty || eventDirty);
   useEffect(() => {
     const error = sessionQuery.error;
     if (
@@ -868,6 +929,7 @@ export default function PsychologistPage() {
   }, [data, session]);
   const openAppointment = (item = null, studentId = "", initialDate = null) => {
     setAppointment(item || {});
+    setAppointmentDirty(false);
     setAppointmentError("");
     setAppointmentForm(
       item
@@ -885,17 +947,22 @@ export default function PsychologistPage() {
           },
     );
   };
+  const updateAppointmentForm = (changes) => {
+    setAppointmentDirty(true);
+    setAppointmentForm((current) => ({ ...current, ...changes }));
+  };
+  const closeAppointment = () => {
+    if (confirmDiscard()) {
+      setAppointment(null);
+      setAppointmentDirty(false);
+    }
+  };
   const saveAppointment = async (eventObject) => {
     eventObject.preventDefault();
     setAppointmentError("");
-    if (
-      !appointmentForm.alunoId ||
-      !appointmentForm.descricao?.trim() ||
-      !appointmentForm.dataAtendimento
-    )
-      return setAppointmentError(
-        "Preencha aluno, motivo e data do atendimento.",
-      );
+    const validation = appointmentSchema.safeParse(appointmentForm);
+    if (!validation.success)
+      return setAppointmentError(validationMessage(validation));
     if (
       !appointment?.id &&
       new Date(appointmentForm.dataAtendimento) < new Date()
@@ -906,11 +973,14 @@ export default function PsychologistPage() {
     try {
       const body = appointmentPayload(appointmentForm, session);
       if (appointment?.id)
-        await api.put(`/atendimentos/${appointment.id}`, body);
-      else await api.post("/atendimentos", body);
+        await dataMutation.mutateAsync(() =>
+          api.put(`/atendimentos/${appointment.id}`, body),
+        );
+      else
+        await dataMutation.mutateAsync(() => api.post("/atendimentos", body));
       setAppointment(null);
+      setAppointmentDirty(false);
       toast("Atendimento salvo com sucesso!", "success");
-      await loadData();
     } catch (error) {
       setAppointmentError(
         error.message || "Não foi possível salvar o atendimento.",
@@ -919,10 +989,12 @@ export default function PsychologistPage() {
   };
   const changeStatus = async (status) => {
     try {
-      await api.patch(`/atendimentos/${appointment.id}/status`, { status });
+      await dataMutation.mutateAsync(() =>
+        api.patch(`/atendimentos/${appointment.id}/status`, { status }),
+      );
       setAppointment(null);
+      setAppointmentDirty(false);
       toast("Status atualizado.", "success");
-      await loadData();
     } catch (error) {
       setAppointmentError(
         error.message || "Não foi possível atualizar o status.",
@@ -931,6 +1003,7 @@ export default function PsychologistPage() {
   };
   const openEvent = (item = null, initialDate = null) => {
     setEvent(item || {});
+    setEventDirty(false);
     setEventError("");
     setEventForm(
       item
@@ -950,16 +1023,22 @@ export default function PsychologistPage() {
           },
     );
   };
+  const updateEventForm = (changes) => {
+    setEventDirty(true);
+    setEventForm((current) => ({ ...current, ...changes }));
+  };
+  const closeEvent = () => {
+    if (confirmDiscard()) {
+      setEvent(null);
+      setEventDirty(false);
+    }
+  };
   const saveEvent = async (eventObject) => {
     eventObject.preventDefault();
     setEventError("");
-    if (!eventForm.titulo.trim() || !eventForm.dataInicio)
-      return setEventError("Informe título e início do evento.");
-    if (
-      eventForm.dataFim &&
-      new Date(eventForm.dataFim) < new Date(eventForm.dataInicio)
-    )
-      return setEventError("O fim do evento não pode ser anterior ao início.");
+    const validation = eventSchema.safeParse(eventForm);
+    if (!validation.success)
+      return setEventError(validationMessage(validation));
     try {
       const body = {
         ...eventForm,
@@ -968,11 +1047,15 @@ export default function PsychologistPage() {
         psicologoId: Number(session.id),
         unidadeId: session.unidadeId ? Number(session.unidadeId) : null,
       };
-      if (event?.id) await api.put(`/agenda-eventos/${event.id}`, body);
-      else await api.post("/agenda-eventos", body);
+      if (event?.id)
+        await dataMutation.mutateAsync(() =>
+          api.put(`/agenda-eventos/${event.id}`, body),
+        );
+      else
+        await dataMutation.mutateAsync(() => api.post("/agenda-eventos", body));
       setEvent(null);
+      setEventDirty(false);
       toast("Evento salvo.", "success");
-      await loadData();
     } catch (error) {
       setEventError(error.message || "Não foi possível salvar o evento.");
     }
@@ -980,10 +1063,12 @@ export default function PsychologistPage() {
   const deleteEvent = async () => {
     if (!window.confirm("Excluir este evento da agenda?")) return;
     try {
-      await api.delete(`/agenda-eventos/${event.id}`);
+      await dataMutation.mutateAsync(() =>
+        api.delete(`/agenda-eventos/${event.id}`),
+      );
       setEvent(null);
+      setEventDirty(false);
       toast("Evento excluído.", "success");
-      await loadData();
     } catch (error) {
       setEventError(error.message);
     }
@@ -1003,8 +1088,8 @@ export default function PsychologistPage() {
       />
     );
   const navigate = (next) => {
-    setPanel(next);
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    if (next !== panel && !confirmDiscard()) return;
+    navigateRoute(next);
   };
   return (
     <PsychologistShell
@@ -1075,7 +1160,7 @@ export default function PsychologistPage() {
       <AccessibleModal
         open={appointment !== null}
         title={appointment?.id ? "Gerenciar Atendimento" : "Novo Atendimento"}
-        onClose={() => setAppointment(null)}
+        onClose={closeAppointment}
       >
         <form onSubmit={saveAppointment}>
           <ErrorMessage text={appointmentError} />
@@ -1086,10 +1171,7 @@ export default function PsychologistPage() {
                 className="form-control"
                 value={appointmentForm.alunoId || ""}
                 onChange={(e) =>
-                  setAppointmentForm({
-                    ...appointmentForm,
-                    alunoId: e.target.value,
-                  })
+                  updateAppointmentForm({ alunoId: e.target.value })
                 }
                 disabled={Boolean(appointment?.id)}
               >
@@ -1108,10 +1190,7 @@ export default function PsychologistPage() {
                 rows="3"
                 value={appointmentForm.descricao || ""}
                 onChange={(e) =>
-                  setAppointmentForm({
-                    ...appointmentForm,
-                    descricao: e.target.value,
-                  })
+                  updateAppointmentForm({ descricao: e.target.value })
                 }
               />
             </div>
@@ -1122,10 +1201,7 @@ export default function PsychologistPage() {
                 className="form-control"
                 value={appointmentForm.dataAtendimento || ""}
                 onChange={(e) =>
-                  setAppointmentForm({
-                    ...appointmentForm,
-                    dataAtendimento: e.target.value,
-                  })
+                  updateAppointmentForm({ dataAtendimento: e.target.value })
                 }
               />
             </div>
@@ -1135,10 +1211,7 @@ export default function PsychologistPage() {
                 className="form-control"
                 value={appointmentForm.tipoAtendimento || "dentro"}
                 onChange={(e) =>
-                  setAppointmentForm({
-                    ...appointmentForm,
-                    tipoAtendimento: e.target.value,
-                  })
+                  updateAppointmentForm({ tipoAtendimento: e.target.value })
                 }
               >
                 <option value="dentro">Dentro do horário do curso</option>
@@ -1152,8 +1225,7 @@ export default function PsychologistPage() {
                 className="form-control"
                 value={appointmentForm.categoriaAtendimento || ""}
                 onChange={(e) =>
-                  setAppointmentForm({
-                    ...appointmentForm,
+                  updateAppointmentForm({
                     categoriaAtendimento: e.target.value,
                   })
                 }
@@ -1173,10 +1245,7 @@ export default function PsychologistPage() {
                 rows="3"
                 value={appointmentForm.observacoes || ""}
                 onChange={(e) =>
-                  setAppointmentForm({
-                    ...appointmentForm,
-                    observacoes: e.target.value,
-                  })
+                  updateAppointmentForm({ observacoes: e.target.value })
                 }
               />
             </div>
@@ -1187,10 +1256,7 @@ export default function PsychologistPage() {
                 rows="5"
                 value={appointmentForm.relatorioConsulta || ""}
                 onChange={(e) =>
-                  setAppointmentForm({
-                    ...appointmentForm,
-                    relatorioConsulta: e.target.value,
-                  })
+                  updateAppointmentForm({ relatorioConsulta: e.target.value })
                 }
                 placeholder="Informações importantes, orientações e encaminhamentos..."
               />
@@ -1202,6 +1268,7 @@ export default function PsychologistPage() {
                 type="button"
                 className="btn btn-confirm"
                 onClick={() => changeStatus("EM_ANDAMENTO")}
+                disabled={dataMutation.isPending}
               >
                 Confirmar
               </button>
@@ -1209,6 +1276,7 @@ export default function PsychologistPage() {
                 type="button"
                 className="btn btn-success"
                 onClick={() => changeStatus("FINALIZADO")}
+                disabled={dataMutation.isPending}
               >
                 Realizado
               </button>
@@ -1216,6 +1284,7 @@ export default function PsychologistPage() {
                 type="button"
                 className="btn btn-danger"
                 onClick={() => changeStatus("CANCELADO")}
+                disabled={dataMutation.isPending}
               >
                 Cancelar
               </button>
@@ -1225,11 +1294,15 @@ export default function PsychologistPage() {
             <button
               type="button"
               className="btn btn-outline"
-              onClick={() => setAppointment(null)}
+              onClick={closeAppointment}
             >
               Fechar
             </button>
-            <button type="submit" className="btn btn-orange">
+            <button
+              type="submit"
+              className="btn btn-orange"
+              disabled={dataMutation.isPending}
+            >
               <Icon name="save" />
               Salvar alterações
             </button>
@@ -1261,7 +1334,7 @@ export default function PsychologistPage() {
       <AccessibleModal
         open={event !== null}
         title={event?.id ? "Editar Evento" : "Novo Evento"}
-        onClose={() => setEvent(null)}
+        onClose={closeEvent}
         maxWidth={560}
       >
         <form onSubmit={saveEvent}>
@@ -1272,9 +1345,7 @@ export default function PsychologistPage() {
               <input
                 className="form-control"
                 value={eventForm.titulo || ""}
-                onChange={(e) =>
-                  setEventForm({ ...eventForm, titulo: e.target.value })
-                }
+                onChange={(e) => updateEventForm({ titulo: e.target.value })}
               />
             </div>
             <div>
@@ -1282,9 +1353,7 @@ export default function PsychologistPage() {
               <select
                 className="form-control"
                 value={eventForm.tipo || "LEMBRETE"}
-                onChange={(e) =>
-                  setEventForm({ ...eventForm, tipo: e.target.value })
-                }
+                onChange={(e) => updateEventForm({ tipo: e.target.value })}
               >
                 {Object.entries(EVENT_TYPES).map(([key, label]) => (
                   <option value={key} key={key}>
@@ -1299,9 +1368,7 @@ export default function PsychologistPage() {
                 type="color"
                 className="form-control"
                 value={eventForm.cor || "#1B4E9B"}
-                onChange={(e) =>
-                  setEventForm({ ...eventForm, cor: e.target.value })
-                }
+                onChange={(e) => updateEventForm({ cor: e.target.value })}
               />
             </div>
             <div>
@@ -1311,7 +1378,7 @@ export default function PsychologistPage() {
                 className="form-control"
                 value={eventForm.dataInicio || ""}
                 onChange={(e) =>
-                  setEventForm({ ...eventForm, dataInicio: e.target.value })
+                  updateEventForm({ dataInicio: e.target.value })
                 }
               />
             </div>
@@ -1321,9 +1388,7 @@ export default function PsychologistPage() {
                 type="datetime-local"
                 className="form-control"
                 value={eventForm.dataFim || ""}
-                onChange={(e) =>
-                  setEventForm({ ...eventForm, dataFim: e.target.value })
-                }
+                onChange={(e) => updateEventForm({ dataFim: e.target.value })}
               />
             </div>
             <label className="admin-form-full psych-all-day">
@@ -1331,7 +1396,7 @@ export default function PsychologistPage() {
                 type="checkbox"
                 checked={Boolean(eventForm.diaInteiro)}
                 onChange={(e) =>
-                  setEventForm({ ...eventForm, diaInteiro: e.target.checked })
+                  updateEventForm({ diaInteiro: e.target.checked })
                 }
               />
               <span>Evento de dia inteiro</span>
@@ -1342,9 +1407,7 @@ export default function PsychologistPage() {
                 className="form-control"
                 rows="3"
                 value={eventForm.descricao || ""}
-                onChange={(e) =>
-                  setEventForm({ ...eventForm, descricao: e.target.value })
-                }
+                onChange={(e) => updateEventForm({ descricao: e.target.value })}
               />
             </div>
           </div>
@@ -1354,6 +1417,7 @@ export default function PsychologistPage() {
                 type="button"
                 className="btn btn-danger"
                 onClick={deleteEvent}
+                disabled={dataMutation.isPending}
               >
                 Excluir
               </button>
@@ -1361,11 +1425,15 @@ export default function PsychologistPage() {
             <button
               type="button"
               className="btn btn-outline"
-              onClick={() => setEvent(null)}
+              onClick={closeEvent}
             >
               Cancelar
             </button>
-            <button type="submit" className="btn btn-orange">
+            <button
+              type="submit"
+              className="btn btn-orange"
+              disabled={dataMutation.isPending}
+            >
               Salvar evento
             </button>
           </div>

@@ -5,6 +5,7 @@ import br.com.sap.entity.enums.Turno;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import org.hibernate.validator.constraints.br.CPF;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -23,6 +24,7 @@ public class AlunoRequestDTO {
     private String nome;
 
     @NotBlank(message = "O CPF é obrigatório")
+    @CPF(message = "CPF inválido")
     private String cpf;
 
     @NotNull(message = "A data de nascimento é obrigatória")

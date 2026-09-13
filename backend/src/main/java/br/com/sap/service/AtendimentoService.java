@@ -23,6 +23,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.time.LocalTime;
 import java.util.List;
@@ -38,7 +40,13 @@ public class AtendimentoService {
     public List<AtendimentoResponseDTO> listarTodos() {
 
         Usuario logado = usuarioLogado();
-        if (logado != null && (logado.getTipoUsuario() == TipoUsuario.ADMIN_UNIDADE || (logado.getTipoUsuario() == TipoUsuario.ADMINISTRADOR && logado.getUnidade() != null)) && logado.getUnidade() != null) {
+        if (logado != null && logado.getTipoUsuario() == TipoUsuario.INSTRUTOR) {
+            return atendimentoRepository.findByAlunoTurmaInstrutorId(logado.getId())
+                    .stream()
+                    .map(this::converterParaDTO)
+                    .toList();
+        }
+        if (logado != null && logado.getUnidade() != null) {
             return atendimentoRepository.findByAlunoUnidadeId(logado.getUnidade().getId())
                 .stream()
                 .map(this::converterParaDTO)
@@ -49,6 +57,28 @@ public class AtendimentoService {
                 .stream()
                 .map(this::converterParaDTO)
                 .toList();
+    }
+
+    public Page<AtendimentoResponseDTO> listarPaginado(
+            String busca,
+            StatusAtendimento status,
+            Pageable pageable
+    ) {
+        Usuario logado = usuarioLogado();
+        String termo = busca == null ? "" : busca.trim();
+        Page<Atendimento> pagina;
+        if (logado != null && logado.getTipoUsuario() == TipoUsuario.INSTRUTOR) {
+            pagina = atendimentoRepository.pesquisarPorInstrutor(
+                    logado.getId(), termo, status, pageable
+            );
+        } else if (logado != null && logado.getUnidade() != null) {
+            pagina = atendimentoRepository.pesquisarPorUnidade(
+                    logado.getUnidade().getId(), termo, status, pageable
+            );
+        } else {
+            pagina = atendimentoRepository.pesquisar(termo, status, pageable);
+        }
+        return pagina.map(this::converterParaDTO);
     }
 
     public AtendimentoResponseDTO criar(

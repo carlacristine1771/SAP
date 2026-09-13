@@ -1,11 +1,25 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { api } from "../api/client.ts";
-import { usePanelQuery, useSessionQuery } from "../api/panelQueries.ts";
+import {
+  usePanelMutation,
+  usePaginatedPanelQuery,
+  usePanelQuery,
+  useSessionQuery,
+} from "../api/panelQueries.ts";
 import { backendRoleToFrontend } from "../auth/session.ts";
+import { usePanelRoute } from "../hooks/usePanelRoute.ts";
+import { useUnsavedChanges } from "../hooks/useUnsavedChanges.ts";
+import { useDebouncedValue } from "../hooks/useDebouncedValue.ts";
+import {
+  appointmentSchema,
+  studentSchema,
+  validationMessage,
+} from "../validation/schemas.ts";
 import ChatPanel from "../components/panel/ChatPanel.jsx";
 import Icon from "../components/panel/Icon.jsx";
 import OperationalShell from "../components/panel/OperationalShell.jsx";
 import AccessibleModal from "../components/ui/AccessibleModal.tsx";
+import Pagination from "../components/ui/Pagination.tsx";
 import {
   ErrorMessage,
   FatalScreen,
@@ -28,6 +42,22 @@ const EMPTY = {
   users: [],
   messages: [],
 };
+const COORDINATION_PANELS = [
+  "home",
+  "alunos",
+  "encaminhar",
+  "cursos",
+  "instrutores",
+  "atendimentos",
+  "chat",
+];
+const INSTRUCTOR_PANELS = [
+  "home",
+  "alunos",
+  "encaminhar",
+  "atendimentos",
+  "chat",
+];
 async function fetchOperationalData() {
   const [students, appointments, courses, classes, users, messages] =
     await Promise.all([
@@ -296,12 +326,17 @@ function Home({ profile, session, data, onNavigate, onNewStudent }) {
 
 function Students({ students, appointments, onNew, onRefer }) {
   const [search, setSearch] = useState("");
-  const visible = students.filter((student) =>
+  const [page, setPage] = useState(0);
+  const debouncedSearch = useDebouncedValue(search);
+  useEffect(() => setPage(0), [search]);
+  const pageQuery = usePaginatedPanelQuery("alunos", page, debouncedSearch);
+  const localVisible = students.filter((student) =>
     [student.nome, student.cpf, student.curso, student.turma]
       .join(" ")
       .toLowerCase()
       .includes(search.toLowerCase()),
   );
+  const visible = pageQuery.data?.content ?? localVisible;
   return (
     <div className="panel-section active fade-up">
       <div className="data-table-wrap mobile-record-list">
@@ -394,6 +429,13 @@ function Students({ students, appointments, onNew, onRefer }) {
             )}
           </tbody>
         </table>
+        <Pagination
+          page={pageQuery.data?.page || 0}
+          totalPages={pageQuery.data?.totalPages || 0}
+          totalElements={pageQuery.data?.totalElements || visible.length}
+          loading={pageQuery.isFetching}
+          onChange={setPage}
+        />
       </div>
     </div>
   );
@@ -403,8 +445,9 @@ function Referral({
   students,
   selectedStudentId,
   session,
-  onCreated,
+  onSubmitReferral,
   onToast,
+  onDirtyChange,
 }) {
   const [form, setForm] = useState({
     alunoId: selectedStudentId || "",
@@ -414,6 +457,10 @@ function Referral({
     observacoes: "",
   });
   const [error, setError] = useState("");
+  const initialForm = useRef(form);
+  const dirty = JSON.stringify(form) !== JSON.stringify(initialForm.current);
+  useEffect(() => onDirtyChange(dirty), [dirty, onDirtyChange]);
+  useEffect(() => () => onDirtyChange(false), [onDirtyChange]);
   useEffect(() => {
     if (selectedStudentId)
       setForm((current) => ({ ...current, alunoId: selectedStudentId }));
@@ -421,10 +468,15 @@ function Referral({
   const submit = async (event) => {
     event.preventDefault();
     setError("");
-    if (!form.alunoId || !form.descricao.trim() || !form.tipo || !form.data)
-      return setError("Preencha aluno, motivo, data e tipo de atendimento.");
+    const validation = appointmentSchema.safeParse({
+      alunoId: form.alunoId,
+      descricao: form.descricao,
+      dataAtendimento: form.data,
+    });
+    if (!validation.success) return setError(validationMessage(validation));
+    if (!form.tipo) return setError("Selecione o tipo de atendimento.");
     try {
-      await api.post("/atendimentos", {
+      await onSubmitReferral({
         titulo: "Atendimento SAP",
         descricao: form.descricao.trim(),
         dataAtendimento: `${form.data}:00`,
@@ -443,7 +495,6 @@ function Referral({
         tipo: "",
         observacoes: "",
       });
-      await onCreated();
     } catch (requestError) {
       setError(
         requestError.message || "Não foi possível enviar a solicitação.",
@@ -556,7 +607,16 @@ function Referral({
 function Appointments({ appointments }) {
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("");
-  const visible = appointments
+  const [page, setPage] = useState(0);
+  const debouncedSearch = useDebouncedValue(search);
+  useEffect(() => setPage(0), [search, status]);
+  const pageQuery = usePaginatedPanelQuery(
+    "atendimentos",
+    page,
+    debouncedSearch,
+    status,
+  );
+  const localVisible = appointments
     .filter((item) => !status || item.status === status)
     .filter((item) =>
       [item.aluno, item.descricao, item.solicitante]
@@ -564,6 +624,7 @@ function Appointments({ appointments }) {
         .toLowerCase()
         .includes(search.toLowerCase()),
     );
+  const visible = pageQuery.data?.content ?? localVisible;
   return (
     <div className="panel-section active fade-up">
       <div className="data-table-wrap mobile-record-list">
@@ -638,6 +699,13 @@ function Appointments({ appointments }) {
             )}
           </tbody>
         </table>
+        <Pagination
+          page={pageQuery.data?.page || 0}
+          totalPages={pageQuery.data?.totalPages || 0}
+          totalElements={pageQuery.data?.totalElements || visible.length}
+          loading={pageQuery.isFetching}
+          onChange={setPage}
+        />
       </div>
     </div>
   );
@@ -792,15 +860,22 @@ function Instructors({ users, classes, onEdit }) {
 }
 
 export default function OperationalPage({ profile }) {
-  const [panel, setPanel] = useState("home");
+  const { activePanel: panel, navigate: navigateRoute } = usePanelRoute({
+    role: profile,
+    defaultPanel: "home",
+    allowedPanels:
+      profile === "coordenacao" ? COORDINATION_PANELS : INSTRUCTOR_PANELS,
+  });
   const [studentModal, setStudentModal] = useState(false),
     [studentForm, setStudentForm] = useState(blankStudent),
     [studentError, setStudentError] = useState(""),
     [selectedStudent, setSelectedStudent] = useState("");
   const [editor, setEditor] = useState(null),
     [editorForm, setEditorForm] = useState({}),
+    [editorInitial, setEditorInitial] = useState({}),
     [editorError, setEditorError] = useState(""),
     [toasts, setToasts] = useState([]);
+  const [referralDirty, setReferralDirty] = useState(false);
   const toast = useCallback((text, type = "info") => {
     const id = Date.now() + Math.random();
     setToasts((current) => [...current, { id, text, type }]);
@@ -812,16 +887,28 @@ export default function OperationalPage({ profile }) {
   const sessionQuery = useSessionQuery();
   const session = sessionQuery.data;
   const authorized = backendRoleToFrontend(session?.tipoUsuario) === profile;
+  const panelQueryName = `${profile}:${session?.id || "pending"}`;
   const dataQuery = usePanelQuery(
-    `${profile}:${session?.id || "pending"}`,
+    panelQueryName,
     Boolean(session && authorized),
     fetchOperationalData,
   );
+  const dataMutation = usePanelMutation(panelQueryName);
   const data = dataQuery.data || EMPTY;
   const refreshPanel = dataQuery.refetch;
   const loadData = useCallback(async () => {
     await refreshPanel();
   }, [refreshPanel]);
+  const studentDirty = Boolean(
+    studentModal &&
+    JSON.stringify(studentForm) !== JSON.stringify(blankStudent),
+  );
+  const editorDirty = Boolean(
+    editor && JSON.stringify(editorForm) !== JSON.stringify(editorInitial),
+  );
+  const confirmDiscard = useUnsavedChanges(
+    studentDirty || editorDirty || referralDirty,
+  );
   useEffect(() => {
     const error = sessionQuery.error;
     if (
@@ -832,8 +919,8 @@ export default function OperationalPage({ profile }) {
       window.location.replace("/");
   }, [authorized, session, sessionQuery.error]);
   const navigate = (next) => {
-    setPanel(next);
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    if (next !== panel && !confirmDiscard()) return;
+    navigateRoute(next);
   };
   const refer = (id) => {
     setSelectedStudent(id);
@@ -871,38 +958,31 @@ export default function OperationalPage({ profile }) {
   const saveStudent = async (event) => {
     event.preventDefault();
     setStudentError("");
-    if (
-      !studentForm.nome ||
-      !studentForm.cpf ||
-      !studentForm.dataNascimento ||
-      !studentForm.telefone ||
-      !studentForm.cursoId ||
-      !studentForm.turmaId
-    )
-      return setStudentError(
-        "Preencha todos os campos obrigatórios e selecione curso e turma.",
-      );
+    const validation = studentSchema.safeParse(studentForm);
+    if (!validation.success)
+      return setStudentError(validationMessage(validation));
     const selectedClass = scoped.classes.find(
       (item) => Number(item.id) === Number(studentForm.turmaId),
     );
     try {
-      await api.post("/alunos", {
-        nome: studentForm.nome.trim(),
-        cpf: studentForm.cpf.trim(),
-        dataNascimento: studentForm.dataNascimento,
-        telefone: studentForm.telefone.trim(),
-        email: studentForm.email.trim() || null,
-        responsavel: session.nome,
-        turno: selectedClass?.turno || studentForm.turno,
-        observacoes: `Matrícula: ${studentForm.matricula || "Não informada"} | PCD: ${studentForm.pcd === "sim" ? "Sim" : "Não"}`,
-        unidadeId: Number(session.unidadeId),
-        cursoId: Number(studentForm.cursoId),
-        turmaId: Number(studentForm.turmaId),
-      });
+      await dataMutation.mutateAsync(() =>
+        api.post("/alunos", {
+          nome: studentForm.nome.trim(),
+          cpf: studentForm.cpf.trim(),
+          dataNascimento: studentForm.dataNascimento,
+          telefone: studentForm.telefone.trim(),
+          email: studentForm.email.trim() || null,
+          responsavel: session.nome,
+          turno: selectedClass?.turno || studentForm.turno,
+          observacoes: `Matrícula: ${studentForm.matricula || "Não informada"} | PCD: ${studentForm.pcd === "sim" ? "Sim" : "Não"}`,
+          unidadeId: Number(session.unidadeId),
+          cursoId: Number(studentForm.cursoId),
+          turmaId: Number(studentForm.turmaId),
+        }),
+      );
       setStudentModal(false);
       setStudentForm(blankStudent);
       toast("Aluno cadastrado com sucesso!", "success");
-      await loadData();
     } catch (error) {
       setStudentError(error.message || "Não foi possível cadastrar o aluno.");
     }
@@ -910,26 +990,44 @@ export default function OperationalPage({ profile }) {
   const openEditor = (kind, item = {}) => {
     setEditor({ kind, item });
     setEditorError("");
+    let nextForm = {};
     if (kind === "course")
-      setEditorForm({
+      nextForm = {
         nome: item.nome || "",
         tipoAprendizagem: item.tipoAprendizagem || "",
         descricao: item.descricao || "",
-      });
+      };
     if (kind === "class")
-      setEditorForm({
+      nextForm = {
         nome: item.nome || "",
         cursoId: String(item.cursoId || ""),
         turno: item.turno || "MATUTINO",
         instrutorId: String(item.instrutorId || ""),
-      });
+      };
     if (kind === "instructor")
-      setEditorForm({
+      nextForm = {
         nome: item.nome || "",
         usuario: item.usuario || "",
         email: item.email || "",
         senha: "",
-      });
+      };
+    setEditorForm(nextForm);
+    setEditorInitial(nextForm);
+  };
+  const closeStudent = () => {
+    if (confirmDiscard()) {
+      setStudentModal(false);
+      setStudentForm(blankStudent);
+      setStudentError("");
+    }
+  };
+  const closeEditor = () => {
+    if (confirmDiscard()) {
+      setEditor(null);
+      setEditorForm({});
+      setEditorInitial({});
+      setEditorError("");
+    }
   };
   const saveEditor = async (event) => {
     event.preventDefault();
@@ -945,8 +1043,11 @@ export default function OperationalPage({ profile }) {
           unidadeId: Number(session.unidadeId),
           ativo: true,
         };
-        if (item.id) await api.put(`/cursos/${item.id}`, body);
-        else await api.post("/cursos", body);
+        if (item.id)
+          await dataMutation.mutateAsync(() =>
+            api.put(`/cursos/${item.id}`, body),
+          );
+        else await dataMutation.mutateAsync(() => api.post("/cursos", body));
       }
       if (kind === "class") {
         if (!editorForm.nome.trim() || !editorForm.cursoId)
@@ -961,8 +1062,11 @@ export default function OperationalPage({ profile }) {
             : null,
           ativo: true,
         };
-        if (item.id) await api.put(`/turmas/${item.id}`, body);
-        else await api.post("/turmas", body);
+        if (item.id)
+          await dataMutation.mutateAsync(() =>
+            api.put(`/turmas/${item.id}`, body),
+          );
+        else await dataMutation.mutateAsync(() => api.post("/turmas", body));
       }
       if (kind === "instructor") {
         if (
@@ -973,27 +1077,30 @@ export default function OperationalPage({ profile }) {
         )
           return setEditorError("Preencha todos os campos obrigatórios.");
         if (item.id)
-          await api.put(`/usuarios/${item.id}`, {
-            nome: editorForm.nome.trim(),
-            usuario: editorForm.usuario.trim(),
-            email: editorForm.email.trim(),
-            senha: editorForm.senha || null,
-            tipoUsuario: "INSTRUTOR",
-            unidadeId: Number(session.unidadeId),
-          });
+          await dataMutation.mutateAsync(() =>
+            api.put(`/usuarios/${item.id}`, {
+              nome: editorForm.nome.trim(),
+              usuario: editorForm.usuario.trim(),
+              email: editorForm.email.trim(),
+              senha: editorForm.senha || null,
+              tipoUsuario: "INSTRUTOR",
+              unidadeId: Number(session.unidadeId),
+            }),
+          );
         else
-          await api.post("/auth/register", {
-            ...editorForm,
-            nome: editorForm.nome.trim(),
-            usuario: editorForm.usuario.trim(),
-            email: editorForm.email.trim(),
-            tipoUsuario: "INSTRUTOR",
-            unidadeId: Number(session.unidadeId),
-          });
+          await dataMutation.mutateAsync(() =>
+            api.post("/auth/register", {
+              ...editorForm,
+              nome: editorForm.nome.trim(),
+              usuario: editorForm.usuario.trim(),
+              email: editorForm.email.trim(),
+              tipoUsuario: "INSTRUTOR",
+              unidadeId: Number(session.unidadeId),
+            }),
+          );
       }
       setEditor(null);
       toast("Dados salvos com sucesso!", "success");
-      await loadData();
     } catch (error) {
       setEditorError(error.message || "Não foi possível salvar.");
     }
@@ -1042,8 +1149,11 @@ export default function OperationalPage({ profile }) {
           students={scoped.students}
           selectedStudentId={selectedStudent}
           session={session}
-          onCreated={loadData}
+          onSubmitReferral={(body) =>
+            dataMutation.mutateAsync(() => api.post("/atendimentos", body))
+          }
           onToast={toast}
+          onDirtyChange={setReferralDirty}
         />
       )}{" "}
       {panel === "atendimentos" && (
@@ -1073,7 +1183,7 @@ export default function OperationalPage({ profile }) {
       <AccessibleModal
         open={studentModal}
         title="Cadastrar Aluno"
-        onClose={() => setStudentModal(false)}
+        onClose={closeStudent}
       >
         <form onSubmit={saveStudent}>
           <ErrorMessage text={studentError} />
@@ -1200,11 +1310,15 @@ export default function OperationalPage({ profile }) {
             <button
               type="button"
               className="btn btn-outline"
-              onClick={() => setStudentModal(false)}
+              onClick={closeStudent}
             >
               Cancelar
             </button>
-            <button className="btn btn-orange" type="submit">
+            <button
+              className="btn btn-orange"
+              type="submit"
+              disabled={dataMutation.isPending}
+            >
               <Icon name="addUser" />
               Cadastrar Aluno
             </button>
@@ -1226,7 +1340,7 @@ export default function OperationalPage({ profile }) {
                 ? "Editar instrutor"
                 : "Criar instrutor"
         }
-        onClose={() => setEditor(null)}
+        onClose={closeEditor}
       >
         <form onSubmit={saveEditor}>
           <ErrorMessage text={editorError} />
@@ -1361,11 +1475,15 @@ export default function OperationalPage({ profile }) {
             <button
               type="button"
               className="btn btn-outline"
-              onClick={() => setEditor(null)}
+              onClick={closeEditor}
             >
               Cancelar
             </button>
-            <button type="submit" className="btn btn-orange">
+            <button
+              type="submit"
+              className="btn btn-orange"
+              disabled={dataMutation.isPending}
+            >
               Salvar
             </button>
           </div>

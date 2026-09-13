@@ -1,7 +1,21 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
 import { api } from "../api/client.ts";
-import { usePanelQuery, useSessionQuery } from "../api/panelQueries.ts";
+import {
+  usePanelMutation,
+  usePanelQuery,
+  useSessionQuery,
+} from "../api/panelQueries.ts";
 import { backendRoleToFrontend } from "../auth/session.ts";
+import { usePanelRoute } from "../hooks/usePanelRoute.ts";
+import { useUnsavedChanges } from "../hooks/useUnsavedChanges.ts";
+import {
+  createUserSchema,
+  unitSchema,
+  userSchema,
+  validationMessage,
+} from "../validation/schemas.ts";
 import ChatPanel from "../components/panel/ChatPanel.jsx";
 import DashboardCharts from "../components/panel/DashboardCharts.jsx";
 import Icon from "../components/panel/Icon.jsx";
@@ -21,6 +35,7 @@ const EMPTY_DATA = {
   appointments: [],
   messages: [],
 };
+const ADMIN_PANELS = ["dashboard", "unidades", "usuarios", "chat", "criar"];
 async function fetchAdminData() {
   const [units, users, students, appointments, messages] = await Promise.all([
     api.get("/unidades"),
@@ -492,53 +507,47 @@ function UsersPanel({ users, units, onEdit }) {
   );
 }
 
-function CreateUserPanel({ session, units, onCreated, onToast }) {
-  const [role, setRole] = useState("");
-  const [form, setForm] = useState({
+function CreateUserPanel({
+  session,
+  units,
+  onSubmitUser,
+  onToast,
+  onDirtyChange,
+}) {
+  const [error, setError] = useState("");
+  const defaultValues = {
+    role: "",
     nome: "",
     email: "",
     usuario: "",
     senha: "",
     unidadeId: session.unidadeId ? String(session.unidadeId) : "",
-  });
-  const [error, setError] = useState("");
-  const [saving, setSaving] = useState(false);
+  };
+  const {
+    register,
+    handleSubmit,
+    reset,
+    setValue,
+    watch,
+    formState: { errors, isDirty, isSubmitting },
+  } = useForm({ resolver: zodResolver(createUserSchema), defaultValues });
+  useEffect(() => {
+    onDirtyChange(isDirty);
+    return () => onDirtyChange(false);
+  }, [isDirty, onDirtyChange]);
+  const role = watch("role");
   const selectableRoles = Object.entries(ROLE_META).filter(
     ([key]) => !(session.unidadeId && key === "administrador"),
   );
-  const setField = (field) => (event) =>
-    setForm((current) => ({ ...current, [field]: event.target.value }));
   const clear = () => {
-    setRole("");
     setError("");
-    setForm({
-      nome: "",
-      email: "",
-      usuario: "",
-      senha: "",
-      unidadeId: session.unidadeId ? String(session.unidadeId) : "",
-    });
+    reset(defaultValues);
   };
-  const submit = async (event) => {
-    event?.preventDefault();
+  const submit = handleSubmit(async (form) => {
     setError("");
     const unitRequired = role !== "administrador";
-    if (!role) return setError("Selecione um perfil.");
-    if (
-      !form.nome.trim() ||
-      !form.email.trim() ||
-      !form.usuario.trim() ||
-      !form.senha ||
-      (unitRequired && !form.unidadeId)
-    )
-      return setError("Preencha todos os campos obrigatórios.");
-    if (!/^\S+@\S+\.\S+$/.test(form.email))
-      return setError("Informe um e-mail válido.");
-    if (form.senha.length < 6)
-      return setError("Senha deve ter ao menos 6 caracteres.");
-    setSaving(true);
     try {
-      await api.post("/auth/register", {
+      await onSubmitUser({
         nome: form.nome.trim(),
         email: form.email.trim(),
         usuario: form.usuario.trim(),
@@ -553,13 +562,11 @@ function CreateUserPanel({ session, units, onCreated, onToast }) {
         "success",
       );
       clear();
-      await onCreated();
     } catch (requestError) {
       setError(requestError.message || "Não foi possível salvar o usuário.");
-    } finally {
-      setSaving(false);
     }
-  };
+  });
+  const validationError = Object.values(errors).find(Boolean)?.message;
   return (
     <div className="panel-section active fade-up">
       <form className="form-card" onSubmit={submit}>
@@ -579,7 +586,7 @@ function CreateUserPanel({ session, units, onCreated, onToast }) {
         >
           Selecione o perfil e preencha os dados do novo usuário.
         </p>
-        <ErrorMessage>{error}</ErrorMessage>
+        <ErrorMessage>{error || validationError}</ErrorMessage>
         <div style={{ marginBottom: 18 }}>
           <label className="form-label">
             Perfil <span style={{ color: "var(--s-cancel)" }}>*</span>
@@ -590,9 +597,12 @@ function CreateUserPanel({ session, units, onCreated, onToast }) {
                 type="button"
                 className={`role-option ${meta.className}${role === key ? " selected" : ""}`}
                 onClick={() => {
-                  setRole(key);
+                  setValue("role", key, {
+                    shouldDirty: true,
+                    shouldValidate: true,
+                  });
                   if (key === "administrador")
-                    setForm((current) => ({ ...current, unidadeId: "" }));
+                    setValue("unidadeId", "", { shouldDirty: true });
                 }}
                 key={key}
               >
@@ -610,8 +620,7 @@ function CreateUserPanel({ session, units, onCreated, onToast }) {
             </label>
             <input
               className="form-control"
-              value={form.nome}
-              onChange={setField("nome")}
+              {...register("nome")}
               placeholder="Nome completo do usuário"
               autoComplete="name"
             />
@@ -623,8 +632,7 @@ function CreateUserPanel({ session, units, onCreated, onToast }) {
             <input
               type="email"
               className="form-control"
-              value={form.email}
-              onChange={setField("email")}
+              {...register("email")}
               placeholder="ex: profissional@sap.com"
               autoComplete="email"
             />
@@ -636,8 +644,7 @@ function CreateUserPanel({ session, units, onCreated, onToast }) {
             </label>
             <input
               className="form-control"
-              value={form.usuario}
-              onChange={setField("usuario")}
+              {...register("usuario")}
               placeholder="ex: nome.sobrenome"
               autoComplete="username"
             />
@@ -649,8 +656,7 @@ function CreateUserPanel({ session, units, onCreated, onToast }) {
             <input
               type="password"
               className="form-control"
-              value={form.senha}
-              onChange={setField("senha")}
+              {...register("senha")}
               placeholder="Mínimo 6 caracteres"
               autoComplete="new-password"
             />
@@ -664,8 +670,7 @@ function CreateUserPanel({ session, units, onCreated, onToast }) {
             </label>
             <select
               className="form-control"
-              value={role === "administrador" ? "" : form.unidadeId}
-              onChange={setField("unidadeId")}
+              {...register("unidadeId")}
               disabled={Boolean(session.unidadeId) || role === "administrador"}
             >
               <option value="">
@@ -698,11 +703,11 @@ function CreateUserPanel({ session, units, onCreated, onToast }) {
           <button
             type="submit"
             className="btn admin-blue-btn"
-            disabled={saving}
+            disabled={isSubmitting}
             style={{ flex: 2 }}
           >
             <Icon name="addUser" strokeWidth={2.2} />
-            {saving ? "Criando..." : "Criar Login"}
+            {isSubmitting ? "Criando..." : "Criar Login"}
           </button>
         </div>
       </form>
@@ -711,7 +716,11 @@ function CreateUserPanel({ session, units, onCreated, onToast }) {
 }
 
 export default function AdminPage() {
-  const [activePanel, setActivePanel] = useState("dashboard");
+  const { activePanel, navigate: navigateRoute } = usePanelRoute({
+    role: "admin",
+    defaultPanel: "dashboard",
+    allowedPanels: ADMIN_PANELS,
+  });
   const [unitModal, setUnitModal] = useState(null);
   const [unitForm, setUnitForm] = useState({ nome: "", endereco: "" });
   const [unitError, setUnitError] = useState("");
@@ -724,6 +733,7 @@ export default function AdminPage() {
   });
   const [userError, setUserError] = useState("");
   const [toasts, setToasts] = useState([]);
+  const [createUserDirty, setCreateUserDirty] = useState(false);
 
   const toast = useCallback((text, type = "info") => {
     const id = Date.now() + Math.random();
@@ -738,16 +748,33 @@ export default function AdminPage() {
   const session = sessionQuery.data;
   const authorized =
     backendRoleToFrontend(session?.tipoUsuario) === "administrador";
+  const panelQueryName = `admin:${session?.id || "pending"}`;
   const dataQuery = usePanelQuery(
-    `admin:${session?.id || "pending"}`,
+    panelQueryName,
     Boolean(session && authorized),
     fetchAdminData,
   );
+  const dataMutation = usePanelMutation(panelQueryName);
   const data = dataQuery.data || EMPTY_DATA;
   const refreshPanel = dataQuery.refetch;
   const loadData = useCallback(async () => {
     await refreshPanel();
   }, [refreshPanel]);
+  const unitDirty = Boolean(
+    unitModal !== null &&
+    (unitForm.nome !== (unitModal?.nome || "") ||
+      unitForm.endereco !== (unitModal?.endereco || "")),
+  );
+  const userDirty = Boolean(
+    editUser &&
+    (userForm.nome !== (editUser.nome || "") ||
+      userForm.usuario !== (editUser.usuario || "") ||
+      userForm.senha ||
+      userForm.unidadeId !== String(editUser.unidade?.id || "")),
+  );
+  const confirmDiscard = useUnsavedChanges(
+    unitDirty || userDirty || createUserDirty,
+  );
   useEffect(() => {
     const error = sessionQuery.error;
     if (
@@ -760,8 +787,14 @@ export default function AdminPage() {
 
   const navigate = (panel) => {
     if (panel === "unidades" && session?.unidadeId) return;
-    setActivePanel(panel);
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    if (panel !== activePanel && !confirmDiscard()) return;
+    navigateRoute(panel);
+  };
+  const closeUnit = () => {
+    if (confirmDiscard()) setUnitModal(null);
+  };
+  const closeUser = () => {
+    if (confirmDiscard()) setEditUser(null);
   };
 
   const openUnit = (unit = null) => {
@@ -771,22 +804,24 @@ export default function AdminPage() {
   };
   const saveUnit = async () => {
     setUnitError("");
-    if (!unitForm.nome.trim() || !unitForm.endereco.trim())
-      return setUnitError("Preencha nome e região.");
+    const validation = unitSchema.safeParse(unitForm);
+    if (!validation.success) return setUnitError(validationMessage(validation));
     try {
       const body = {
         nome: unitForm.nome.trim(),
         endereco: unitForm.endereco.trim(),
         telefone: unitModal?.telefone || "Não informado",
       };
-      if (unitModal?.id) await api.put(`/unidades/${unitModal.id}`, body);
-      else await api.post("/unidades", body);
+      if (unitModal?.id)
+        await dataMutation.mutateAsync(() =>
+          api.put(`/unidades/${unitModal.id}`, body),
+        );
+      else await dataMutation.mutateAsync(() => api.post("/unidades", body));
       setUnitModal(null);
       toast(
         unitModal?.id ? "✓ Unidade atualizada!" : "✓ Unidade criada!",
         "success",
       );
-      await loadData();
     } catch (error) {
       setUnitError(error.message || "Não foi possível salvar a unidade.");
     }
@@ -805,29 +840,26 @@ export default function AdminPage() {
   const saveUser = async (event) => {
     event?.preventDefault();
     setUserError("");
-    if (
-      !userForm.nome.trim() ||
-      !userForm.usuario.trim() ||
-      (roleKey(editUser) !== "administrador" && !userForm.unidadeId)
-    )
-      return setUserError("Preencha todos os campos obrigatórios.");
-    if (userForm.senha && userForm.senha.length < 6)
-      return setUserError("Senha deve ter ao menos 6 caracteres.");
+    const validation = userSchema.safeParse(userForm);
+    if (!validation.success) return setUserError(validationMessage(validation));
+    if (roleKey(editUser) !== "administrador" && !userForm.unidadeId)
+      return setUserError("Selecione a unidade do usuário.");
     try {
-      await api.put(`/usuarios/${editUser.id}`, {
-        nome: userForm.nome.trim(),
-        email: editUser.email,
-        usuario: userForm.usuario.trim(),
-        senha: userForm.senha || null,
-        tipoUsuario:
-          roleKey(editUser) === "admin_unidade"
-            ? "ADMIN_UNIDADE"
-            : editUser.tipoUsuario,
-        unidadeId: userForm.unidadeId ? Number(userForm.unidadeId) : null,
-      });
+      await dataMutation.mutateAsync(() =>
+        api.put(`/usuarios/${editUser.id}`, {
+          nome: userForm.nome.trim(),
+          email: editUser.email,
+          usuario: userForm.usuario.trim(),
+          senha: userForm.senha || null,
+          tipoUsuario:
+            roleKey(editUser) === "admin_unidade"
+              ? "ADMIN_UNIDADE"
+              : editUser.tipoUsuario,
+          unidadeId: userForm.unidadeId ? Number(userForm.unidadeId) : null,
+        }),
+      );
       setEditUser(null);
       toast("✓ Usuário atualizado com sucesso!", "success");
-      await loadData();
     } catch (error) {
       setUserError(error.message || "Não foi possível atualizar o usuário.");
     }
@@ -840,10 +872,11 @@ export default function AdminPage() {
     )
       return;
     try {
-      await api.delete(`/usuarios/${editUser.id}`);
+      await dataMutation.mutateAsync(() =>
+        api.delete(`/usuarios/${editUser.id}`),
+      );
       setEditUser(null);
       toast("Usuário removido.", "success");
-      await loadData();
     } catch (error) {
       setUserError(error.message || "Não foi possível excluir o usuário.");
     }
@@ -883,8 +916,11 @@ export default function AdminPage() {
         <CreateUserPanel
           session={session}
           units={data.units}
-          onCreated={loadData}
+          onSubmitUser={(body) =>
+            dataMutation.mutateAsync(() => api.post("/auth/register", body))
+          }
           onToast={toast}
+          onDirtyChange={setCreateUserDirty}
         />
       )}
       {activePanel === "chat" && (
@@ -902,7 +938,7 @@ export default function AdminPage() {
       <AccessibleModal
         open={unitModal !== null}
         title={unitModal?.id ? "Editar Unidade" : "Nova Unidade"}
-        onClose={() => setUnitModal(null)}
+        onClose={closeUnit}
         maxWidth={480}
       >
         <ErrorMessage>{unitError}</ErrorMessage>
@@ -942,7 +978,7 @@ export default function AdminPage() {
           <button
             type="button"
             className="btn btn-outline"
-            onClick={() => setUnitModal(null)}
+            onClick={closeUnit}
             style={{ flex: 1 }}
           >
             Cancelar
@@ -951,6 +987,7 @@ export default function AdminPage() {
             type="button"
             className="btn admin-blue-btn"
             onClick={saveUnit}
+            disabled={dataMutation.isPending}
             style={{ flex: 2 }}
           >
             <Icon name="save" strokeWidth={2.2} />
@@ -962,7 +999,7 @@ export default function AdminPage() {
       <AccessibleModal
         open={Boolean(editUser)}
         title="Editar Usuário"
-        onClose={() => setEditUser(null)}
+        onClose={closeUser}
       >
         <form onSubmit={saveUser}>
           <ErrorMessage>{userError}</ErrorMessage>
@@ -1043,7 +1080,7 @@ export default function AdminPage() {
             <button
               type="button"
               className="btn btn-outline"
-              onClick={() => setEditUser(null)}
+              onClick={closeUser}
               style={{ flex: 1 }}
             >
               Cancelar
@@ -1053,6 +1090,7 @@ export default function AdminPage() {
               className="btn btn-danger btn-sm"
               style={{ padding: "10px 16px", fontSize: 13 }}
               onClick={deleteUser}
+              disabled={dataMutation.isPending}
             >
               <Icon name="trash" />
               Excluir
@@ -1060,6 +1098,7 @@ export default function AdminPage() {
             <button
               type="submit"
               className="btn btn-orange"
+              disabled={dataMutation.isPending}
               style={{ flex: 2 }}
             >
               <Icon name="save" strokeWidth={2.2} />

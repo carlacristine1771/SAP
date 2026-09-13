@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useMutation } from "@tanstack/react-query";
 import { api } from "../../api/client.ts";
 import Icon from "./Icon.jsx";
 import AccessibleModal from "../ui/AccessibleModal.tsx";
@@ -72,7 +73,6 @@ export default function ChatPanel({
   const [newChatOpen, setNewChatOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [text, setText] = useState("");
-  const [sending, setSending] = useState(false);
   const messagesRef = useRef(null);
   const currentId = Number(session?.id);
 
@@ -145,14 +145,30 @@ export default function ChatPanel({
     if (area) area.scrollTop = area.scrollHeight;
   }, [selectedMessages]);
 
+  const readMutation = useMutation({
+    mutationFn: (id) => api.patch(`/chat/mensagens/lidas/${id}`),
+    onSuccess: () => onRefresh("chat"),
+  });
+  const sendMutation = useMutation({
+    mutationFn: ({ destinatarioId, texto }) =>
+      api.post("/chat/mensagens", {
+        destinatarioId,
+        texto,
+        unidadeId: session?.unidadeId || null,
+      }),
+    onSuccess: async () => {
+      setText("");
+      await onRefresh("chat");
+    },
+  });
+
   const selectContact = async (id) => {
     setSelectedId(Number(id));
     setExtraContactIds((current) =>
       current.includes(Number(id)) ? current : [...current, Number(id)],
     );
     try {
-      await api.patch(`/chat/mensagens/lidas/${id}`);
-      await onRefresh("chat");
+      await readMutation.mutateAsync(id);
     } catch {
       /* leitura da conversa continua disponível mesmo se a confirmação falhar */
     }
@@ -160,20 +176,14 @@ export default function ChatPanel({
 
   const send = async () => {
     const messageText = text.trim();
-    if (!messageText || !selectedId || sending) return;
-    setSending(true);
+    if (!messageText || !selectedId || sendMutation.isPending) return;
     try {
-      await api.post("/chat/mensagens", {
+      await sendMutation.mutateAsync({
         destinatarioId: Number(selectedId),
         texto: messageText,
-        unidadeId: session?.unidadeId || null,
       });
-      setText("");
-      await onRefresh("chat");
     } catch (error) {
       onToast(error.message || "Não foi possível enviar a mensagem.", "danger");
-    } finally {
-      setSending(false);
     }
   };
 
@@ -308,7 +318,7 @@ export default function ChatPanel({
               rows="1"
               aria-label="Mensagem"
               placeholder="Digite sua mensagem..."
-              disabled={!selected || sending}
+              disabled={!selected || sendMutation.isPending}
               value={text}
               onChange={(event) => setText(event.target.value)}
               onKeyDown={(event) => {
@@ -322,7 +332,7 @@ export default function ChatPanel({
               type="button"
               className="chat-send-btn"
               aria-label="Enviar mensagem"
-              disabled={!selected || !text.trim() || sending}
+              disabled={!selected || !text.trim() || sendMutation.isPending}
               onClick={send}
             >
               <Icon name="send" strokeWidth={2.5} />

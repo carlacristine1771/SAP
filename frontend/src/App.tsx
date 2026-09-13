@@ -11,7 +11,7 @@ export default function App() {
       <Routes>
         <Route path="/" element={<LandingPage />} />
         <Route path="/index.html" element={<LandingPage />} />
-        <Route path="/painel/:role" element={<PanelPage />} />
+        <Route path="/painel/:role/:section?" element={<PanelPage />} />
         <Route
           path="/pages/painel-admin.html"
           element={<Navigate to="/painel/admin" replace />}

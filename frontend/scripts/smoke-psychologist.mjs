@@ -14,11 +14,14 @@ const appointments = [
   { id: 11, alunoId: 1, aluno: students[0].nome, descricao: 'Acompanhamento acadêmico', dataAtendimento: at(Math.min(now.getDate() + 1, 27), '09:30'), tipoAtendimento: 'dentro', categoriaAtendimento: 'acompanhamento_do_aluno', solicitante: 'Coordenação', psicologo: 'Marina Psicóloga', status: 'PENDENTE', createdAt: at(1, '08:00') },
   { id: 12, alunoId: 2, aluno: students[1].nome, descricao: 'Orientação individual', dataAtendimento: at(Math.max(now.getDate() - 1, 2), '14:00'), tipoAtendimento: 'remoto', categoriaAtendimento: 'atendimento_online', solicitante: 'Instrutor Paulo', psicologo: 'Marina Psicóloga', status: 'FINALIZADO', createdAt: at(1, '09:00') },
 ];
+const pageResponse = (content) => ({ content, page: 0, size: 20, totalElements: content.length, totalPages: content.length ? 1 : 0, first: true, last: true });
 const events = [{ id: 21, titulo: 'Reunião pedagógica', descricao: 'Alinhamento com a coordenação', tipo: 'REUNIAO', dataInicio: at(Math.min(now.getDate() + 2, 28), '10:00'), dataFim: at(Math.min(now.getDate() + 2, 28), '11:00'), diaInteiro: false, cor: '#1B4E9B', psicologoId: 10, unidadeId: 1 }];
 const responses = {
   '/auth/me': { id: 10, nome: 'Marina Psicóloga', tipoUsuario: 'PSICOLOGO', unidadeId: 1, unidade: 'SENAC Taguatinga' },
   '/alunos': students,
+  '/alunos/paginados': pageResponse(students),
   '/atendimentos': appointments,
+  '/atendimentos/paginados': pageResponse(appointments),
   '/usuarios': [{ id: 30, nome: 'Paulo Instrutor', email: 'paulo@senac.br', tipoUsuario: 'INSTRUTOR', unidade: { id: 1 } }],
   '/chat/mensagens': [],
   '/agenda-eventos': events,

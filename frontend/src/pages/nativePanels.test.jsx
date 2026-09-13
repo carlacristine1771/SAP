@@ -2,6 +2,7 @@
 import { act } from "react";
 import { createRoot } from "react-dom/client";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { waitFor } from "@testing-library/react";
 import axe from "axe-core";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -40,13 +41,19 @@ function mockApi(role) {
   });
 }
 
-async function render(element) {
+async function render(element, path) {
   const container = document.createElement("div");
   document.body.appendChild(container);
   const root = createRoot(container);
   await act(async () => {
     root.render(
-      <QueryClientProvider client={queryClient}>{element}</QueryClientProvider>,
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter initialEntries={[path]}>
+          <Routes>
+            <Route path="/painel/:role/:section?" element={element} />
+          </Routes>
+        </MemoryRouter>
+      </QueryClientProvider>,
     );
   });
   await waitFor(() =>
@@ -100,7 +107,10 @@ afterEach(() => {
 describe("painéis React nativos", () => {
   it("renderiza e navega no painel de Administração", async () => {
     mockApi("ADMINISTRADOR");
-    const { container, root } = await render(<AdminPage />);
+    const { container, root } = await render(
+      <AdminPage />,
+      "/painel/admin/dashboard",
+    );
     await expectNoStructuralAccessibilityViolations(container);
     for (const label of ["Unidades", "Usuários", "Criar Login", "Chat"])
       await clickMenu(label);
@@ -114,6 +124,7 @@ describe("painéis React nativos", () => {
     mockApi("COORDENACAO");
     const { container, root } = await render(
       <OperationalPage profile="coordenacao" />,
+      "/painel/coordenacao/home",
     );
     await expectNoStructuralAccessibilityViolations(container);
     for (const label of [
@@ -138,6 +149,7 @@ describe("painéis React nativos", () => {
     mockApi("INSTRUTOR");
     const { container, root } = await render(
       <OperationalPage profile="instrutor" />,
+      "/painel/instrutor/home",
     );
     await expectNoStructuralAccessibilityViolations(container);
     for (const label of ["Alunos", "Encaminhar Aluno", "Atendimentos", "Chat"])
@@ -150,7 +162,10 @@ describe("painéis React nativos", () => {
 
   it("renderiza todos os módulos do painel de Psicologia sem controlador legado", async () => {
     mockApi("PSICOLOGO");
-    const { container, root } = await render(<PsychologistPage />);
+    const { container, root } = await render(
+      <PsychologistPage />,
+      "/painel/psicologo/dashboard",
+    );
     await expectNoStructuralAccessibilityViolations(container);
     for (const label of ["Indicativos", "Histórico", "Atendimentos", "Alunos"])
       await clickMenu(label);
