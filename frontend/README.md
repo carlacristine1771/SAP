@@ -43,8 +43,6 @@ As páginas HTML antigas redirecionam para estas rotas para preservar favoritos.
 
 ## Compatibilidade visual
 
-Os HTMLs originais ficam em `src/legacy` como templates de referência e os
-estilos/controladores existentes são publicados em `public`. O componente
-`LegacyDocument` isola essa camada, garante a ordem de inicialização e permite
-componentizar cada domínio gradualmente sem alterar o design ou os contratos da
-API durante a transição.
+Os painéis são componentes React nativos. Os estilos institucionais preservados
+ficam em `public/css`, enquanto as URLs antigas são redirecionadas pelo React
+Router para manter a compatibilidade com favoritos existentes.

@@ -3,5 +3,6 @@ dist/
 .env
 *.local
 *.log
+.artifacts/
 .tmp-edge-*/
 *-react.png

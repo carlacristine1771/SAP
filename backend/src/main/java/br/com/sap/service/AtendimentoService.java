@@ -55,6 +55,10 @@ public class AtendimentoService {
             AtendimentoRequestDTO dto
     ) {
 
+        if (dto.getDataAtendimento().isBefore(java.time.LocalDateTime.now())) {
+            throw new BusinessRuleException("A data não pode ser no passado");
+        }
+
         Aluno aluno = alunoRepository.findById(dto.getAlunoId())
                 .orElseThrow(() ->
                         new ResourceNotFoundException(

@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "test": "vitest run",
+    "test": "vitest run --pool=threads --maxWorkers=1 --fileParallelism=false",
     "test:watch": "vitest"
   },
   "dependencies": {

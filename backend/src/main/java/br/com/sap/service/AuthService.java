@@ -103,6 +103,10 @@ public class AuthService {
             unidadeId = logado.getUnidade().getId();
         }
 
+        if (!isAdministradorGeralSolicitado(dto.getTipoUsuario(), unidadeId) && unidadeId == null) {
+            throw new BusinessRuleException("A unidade é obrigatória para este perfil.");
+        }
+
         /*
          * Compatibilidade com bancos MySQL já criados antes da versão ADMIN_UNIDADE:
          * o administrador de unidade é salvo como ADMINISTRADOR com unidade_id preenchido.

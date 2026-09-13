@@ -1,6 +1,5 @@
 package br.com.sap.dto.atendimento;
 
-import jakarta.validation.constraints.FutureOrPresent;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
@@ -24,7 +23,6 @@ public class AtendimentoRequestDTO {
     private String descricao;
 
     @NotNull(message = "A data do atendimento é obrigatória")
-    @FutureOrPresent(message = "A data não pode ser no passado")
     private LocalDateTime dataAtendimento;
 
     private String observacoes;

@@ -33,6 +33,5 @@ public class RegisterRequestDTO {
     @NotNull(message = "O tipo de usuário é obrigatório")
     private TipoUsuario tipoUsuario;
 
-    @NotNull(message = "A unidade é obrigatória")
     private Long unidadeId;
 }

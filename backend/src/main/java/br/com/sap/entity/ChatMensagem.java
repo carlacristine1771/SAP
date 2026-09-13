@@ -28,6 +28,7 @@ public class ChatMensagem {
     @Column(nullable = false, columnDefinition = "TEXT")
     private String texto;
 
+    @Builder.Default
     @Column(nullable = false)
     private Boolean lida = false;
 
