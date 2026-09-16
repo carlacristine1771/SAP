@@ -49,12 +49,19 @@ const roleCards = [
     buttonClass: "btn-navy",
     description:
       "Controla acessos, unidades do Senac DF, logins por perfil e mantém cada unidade separada com seus próprios dados.",
-    icon: (
-      <>
-        <path d="M12 3l8 4v5c0 5-3.5 8-8 9-4.5-1-8-4-8-9V7l8-4z" />
-        <path d="M9 12l2 2 4-4" />
-      </>
-    ),
+   icon: (
+  <>
+    {/* Cabeça */}
+    <path d="M9.3 4.3C7.4 4.3 5.9 5.8 5.9 7.7C5.9 9.6 7.4 11.1 9.3 11.1C11.2 11.1 12.7 9.6 12.7 7.7C12.7 5.8 11.2 4.3 9.3 4.3Z" />
+
+    {/* Ombros/corpo */}
+    <path d="M2.5 19.6C2.5 14.7 5.4 12.3 9.3 12.3C13.2 12.3 16.1 14.7 16.1 19.6" />
+
+    {/* Engrenagem (badge de admin) */}
+    <path d="M16.76 14.86L16.57 13.98L18.03 13.98L17.84 14.86L18.65 15.19L19.13 14.44L20.16 15.47L19.41 15.95L19.74 16.76L20.62 16.57L20.62 18.03L19.74 17.84L19.41 18.65L20.16 19.13L19.13 20.16L18.65 19.41L17.84 19.74L18.03 20.62L16.57 20.62L16.76 19.74L15.95 19.41L15.47 20.16L14.44 19.13L15.19 18.65L14.86 17.84L13.98 18.03L13.98 16.57L14.86 16.76L15.19 15.95L14.44 15.47L15.47 14.44L15.95 15.19Z" />
+    <path d="M18.60 17.30A1.30 1.30 0 1 1 16.00 17.30A1.30 1.30 0 1 1 18.60 17.30Z" />
+  </>
+),
   },
   {
     role: "psicologa",
@@ -65,7 +72,20 @@ const roleCards = [
     buttonClass: "btn-navy",
     description:
       "Gerencia todos os atendimentos, alunos, solicitações e se comunica com instrutores e coordenação.",
-    icon: <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />,
+    icon: (
+  <>
+    {/* Coração */}
+    <path d="M12 11.5C10.5 9.3 7 8.5 7 5.8A2.8 2.8 0 0 1 12 4.4a2.8 2.8 0 0 1 5 1.4c0 2.7-3.5 3.5-5 5.7z" />
+
+    {/* Mão esquerda */}
+    <path d="M2.5 14.5c2.2-.8 4.4-.4 6.2 1.1l1.8 1.5c.8.7 2 .7 2.8 0l.7-.7" />
+    <path d="M2.5 14.5V19c2.4 1.7 5.1 2.5 7.9 2.5h1.1c1.5 0 2.9-.6 3.9-1.7l1.1-1.3" />
+
+    {/* Mão direita */}
+    <path d="M21.5 14.5c-2.2-.8-4.4-.4-6.2 1.1l-1.8 1.5c-.8.7-2 .7-2.8 0l-.7-.7" />
+    <path d="M21.5 14.5V19c-2.4 1.7-5.1 2.5-7.9 2.5h-1.1c-1.5 0-2.9-.6-3.9-1.7l-1.1-1.3" />
+  </>
+),
   },
   {
     role: "coordenacao",
@@ -95,11 +115,12 @@ const roleCards = [
     description:
       "Registra alunos de sua turma, encaminha para atendimentos e acompanha o status dos atendimentos.",
     icon: (
-      <>
-        <rect x="2" y="3" width="20" height="14" rx="2" />
-        <path d="M8 21h8M12 17v4" />
-      </>
-    ),
+  <>
+    <path d="M3 5h18v12H3z" />
+    <path d="M7 9h10M7 13h6" />
+    <path d="M9 21h6M12 17v4" />
+  </>
+),
   },
 ];
 
@@ -320,7 +341,7 @@ function LoginModal({ profile, units, onClose, onSuccess }) {
       <div
         ref={modalRef}
         style={{
-          background: "var(--surface)",
+          background: "var(--bg)",
           borderRadius: 24,
           padding: 40,
           maxWidth: 480,
