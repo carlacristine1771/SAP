@@ -280,6 +280,7 @@ function LoginModal({ profile, units, onClose, onSuccess }) {
             novaSenha: nextPassword,
           });
         }
+        localStorage.setItem("sap_token", response.token);
         onSuccess(actualRole);
       } catch (requestError) {
         setError(requestError.message || "Não foi possível entrar.");
@@ -567,10 +568,19 @@ export default function LandingPage() {
     }
   }, []);
 
-  useEffect(() => {
-    const role = backendRoleToFrontend(sessionQuery.data?.tipoUsuario);
-    if (role && ROLE_ROUTES[role]) window.location.replace(ROLE_ROUTES[role]);
-  }, [sessionQuery.data]);
+useEffect(() => {
+  const token = localStorage.getItem("sap_token");
+  const isLoggingOut =
+    new URLSearchParams(window.location.search).get("logout") === "1";
+
+  if (!token || isLoggingOut) return;
+
+  const role = backendRoleToFrontend(sessionQuery.data?.tipoUsuario);
+
+  if (role && ROLE_ROUTES[role]) {
+    window.location.replace(ROLE_ROUTES[role]);
+  }
+}, [sessionQuery.data]);
 
   const closeModal = useCallback(() => setProfile(null), []);
   const completeLogin = useCallback((role) => {

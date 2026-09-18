@@ -1,5 +1,4 @@
 import { useEffect } from "react";
-import { api } from "../../api/client.ts";
 import { useTheme } from "../../hooks/useTheme.ts";
 import Icon from "./Icon.jsx";
 
@@ -43,14 +42,15 @@ export default function OperationalShell({
       .querySelector(".sidebar-nav .nav-link.active")
       ?.scrollIntoView({ block: "nearest", inline: "center" });
   }, [activePanel]);
-  const logout = async () => {
-    try {
-      await api.post("/auth/logout");
-    } catch {
-      /* redirecionamento encerra o fluxo */
-    }
-    window.location.assign("/");
-  };
+const logout = (event) => {
+  event.preventDefault();
+  event.stopPropagation();
+
+  alert("O botão de logout foi acionado!");
+
+  localStorage.removeItem("sap_token");
+  window.location.replace("/?logout=1");
+};
   return (
     <>
       <link rel="stylesheet" href="/css/global.css" />
