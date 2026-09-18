@@ -1,5 +1,4 @@
 import { useEffect } from "react";
-import { api } from "../../api/client.ts";
 import { useTheme } from "../../hooks/useTheme.ts";
 import Icon from "./Icon.jsx";
 
@@ -42,14 +41,13 @@ export default function PanelShell({
       ?.scrollIntoView({ block: "nearest", inline: "center" });
   }, [activePanel]);
 
-  const logout = async () => {
-    try {
-      await api.post("/auth/logout");
-    } catch {
-      /* o redirecionamento encerra a sessão local */
-    }
-    window.location.assign("/");
-  };
+  const logout = (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+
+    localStorage.removeItem("sap_token");
+    window.location.replace("/?logout=1");
+ };
 
   return (
     <>

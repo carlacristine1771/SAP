@@ -4,9 +4,13 @@ import { queryKeys } from "./queryClient.ts";
 import type { Session } from "../types/domain.ts";
 
 export function useSessionQuery() {
+  const token = localStorage.getItem("sap_token");
+
   return useQuery({
     queryKey: queryKeys.session,
     queryFn: () => api.get<Session>("/auth/me"),
+    enabled: Boolean(token),
+    retry: false,
   });
 }
 
