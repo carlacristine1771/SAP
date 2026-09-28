@@ -280,6 +280,8 @@ function LoginModal({ profile, units, onClose, onSuccess }) {
             novaSenha: nextPassword,
           });
         }
+        console.log("LOGIN EXECUTADO NOVAMENTE");
+        localStorage.setItem("sap_token", response.token);
         localStorage.setItem("sap_token", response.token);
         onSuccess(actualRole);
       } catch (requestError) {
@@ -557,16 +559,26 @@ export default function LandingPage() {
   const sessionQuery = useSessionQuery();
   const units = unitsQuery.data || [];
 
-  useEffect(() => {
-    document.title = "SAP SENAC DF — Sistema de Apoio Psicopedagógico";
-    const requestedProfile = new URLSearchParams(window.location.search).get(
-      "perfil",
-    );
-    if (PROFILES[requestedProfile]) {
-      setProfile(requestedProfile);
-      window.history.replaceState({}, "", window.location.pathname);
-    }
-  }, []);
+ useEffect(() => {
+  const params = new URLSearchParams(window.location.search);
+  const isLoggingOut = params.get("logout") === "1";
+
+  if (isLoggingOut) {
+    localStorage.removeItem("sap_token");
+    window.history.replaceState({}, "", window.location.pathname);
+    return;
+  }
+
+  const token = localStorage.getItem("sap_token");
+
+  if (!token) return;
+
+  const role = backendRoleToFrontend(sessionQuery.data?.tipoUsuario);
+
+  if (role && ROLE_ROUTES[role]) {
+    window.location.replace(ROLE_ROUTES[role]);
+  }
+}, [sessionQuery.data]);
 
 useEffect(() => {
   const token = localStorage.getItem("sap_token");

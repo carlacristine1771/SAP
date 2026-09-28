@@ -34,9 +34,6 @@ dependencies {
 	// PostgreSQL
 	runtimeOnly 'org.postgresql:postgresql'
 
-	// MySQL (perfil local/dev)
-	runtimeOnly 'com.mysql:mysql-connector-j'
-
 	// LOMBOK
 	compileOnly 'org.projectlombok:lombok'
 	annotationProcessor 'org.projectlombok:lombok'

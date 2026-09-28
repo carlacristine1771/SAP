@@ -35,13 +35,15 @@ export default function PsychologistShell({
       ?.scrollIntoView({ block: "nearest", inline: "center" });
   }, [activePanel]);
   const logout = async () => {
-    try {
-      await api.post("/auth/logout");
-    } catch {
-      /* o redirecionamento encerra o fluxo */
-    }
-    window.location.assign("/");
-  };
+  try {
+    await api.post("/auth/logout");
+  } catch {
+    /* o redirecionamento encerra o fluxo */
+  } finally {
+    localStorage.removeItem("sap_token");
+    window.location.assign("/?logout=1");
+  }
+};
   return (
     <>
       <link rel="stylesheet" href="/css/global.css" />
