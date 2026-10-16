@@ -3,6 +3,7 @@ package br.com.sap.exception;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.access.AccessDeniedException;
 
 import org.springframework.validation.FieldError;
 
@@ -105,6 +106,15 @@ public class GlobalExceptionHandler {
         response.put("error", "Falha de autenticação");
         response.put("message", "Usuário ou senha incorretos");
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+    }
+
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<Map<String, Object>> handleAccessDenied(AccessDeniedException ex) {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of(
+                "timestamp", LocalDateTime.now(),
+                "status", HttpStatus.FORBIDDEN.value(),
+                "error", "Acesso negado",
+                "message", ex.getMessage()));
     }
 
     @ExceptionHandler(Exception.class)

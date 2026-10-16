@@ -11,6 +11,8 @@ import br.com.sap.exception.ResourceNotFoundException;
 import br.com.sap.repository.UnidadeRepository;
 import br.com.sap.repository.UsuarioRepository;
 import br.com.sap.security.JwtService;
+import br.com.sap.security.UsuarioPermissions;
+import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -27,6 +29,7 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final AuthenticationManager authenticationManager;
+    private final UsuarioPermissions permissions;
 
     public LoginResponseDTO login(LoginRequestDTO dto) {
         Usuario usuario = buscarPorIdentificador(dto.getEmail());
@@ -77,7 +80,10 @@ public class AuthService {
         register(dto, null);
     }
 
+    @Transactional
     public void register(RegisterRequestDTO dto, Authentication authentication) {
+        Usuario logado = permissions.authenticated(authentication);
+        permissions.requireCreate(logado, dto.getTipoUsuario(), dto.getUnidadeId());
         String email = dto.getEmail() == null ? "" : dto.getEmail().trim();
         String loginUsuario = dto.getUsuario() == null ? "" : dto.getUsuario().trim();
 
@@ -89,19 +95,8 @@ public class AuthService {
         }
         liberarCredenciaisDeUsuariosInativos(email, loginUsuario);
 
-        Usuario logado = authentication == null ? null : usuarioRepository.findByEmailIgnoreCaseAndAtivoTrue(authentication.getName()).orElse(null);
         Long unidadeId = dto.getUnidadeId();
         br.com.sap.entity.enums.TipoUsuario tipoParaSalvar = dto.getTipoUsuario();
-
-        if (isAdminUnidade(logado)) {
-            if (isAdministradorGeralSolicitado(dto.getTipoUsuario(), dto.getUnidadeId())) {
-                throw new BusinessRuleException("Administrador da unidade não pode criar administrador geral.");
-            }
-            if (logado.getUnidade() == null) {
-                throw new BusinessRuleException("Administrador da unidade sem unidade vinculada.");
-            }
-            unidadeId = logado.getUnidade().getId();
-        }
 
         if (!isAdministradorGeralSolicitado(dto.getTipoUsuario(), unidadeId) && unidadeId == null) {
             throw new BusinessRuleException("A unidade é obrigatória para este perfil.");
@@ -181,12 +176,6 @@ public class AuthService {
         return usuarioRepository.findByEmailIgnoreCaseAndAtivoTrue(valor)
                 .or(() -> usuarioRepository.findByUsuarioIgnoreCaseAndAtivoTrue(valor))
                 .orElseThrow(() -> new ResourceNotFoundException("Usuário não encontrado"));
-    }
-
-    private boolean isAdminUnidade(Usuario usuario) {
-        return usuario != null
-                && (usuario.getTipoUsuario() == br.com.sap.entity.enums.TipoUsuario.ADMIN_UNIDADE
-                || (usuario.getTipoUsuario() == br.com.sap.entity.enums.TipoUsuario.ADMINISTRADOR && usuario.getUnidade() != null));
     }
 
     private boolean isAdministradorGeralSolicitado(br.com.sap.entity.enums.TipoUsuario tipo, Long unidadeId) {

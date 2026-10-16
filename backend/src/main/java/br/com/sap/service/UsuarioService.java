@@ -8,6 +8,7 @@ import br.com.sap.exception.BusinessRuleException;
 import br.com.sap.exception.ResourceNotFoundException;
 import br.com.sap.repository.UnidadeRepository;
 import br.com.sap.repository.UsuarioRepository;
+import br.com.sap.security.UsuarioPermissions;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -23,34 +24,41 @@ public class UsuarioService {
     private final UsuarioRepository usuarioRepository;
     private final UnidadeRepository unidadeRepository;
     private final PasswordEncoder passwordEncoder;
+    private final UsuarioPermissions permissions;
 
     public List<Usuario> listarTodos(Authentication authentication) {
-        Usuario logado = buscarLogado(authentication);
-        if (isAdminUnidade(logado)) {
-            Long unidadeId = logado.getUnidade() != null ? logado.getUnidade().getId() : null;
-            if (unidadeId == null) return List.of();
-            return usuarioRepository.findByUnidadeIdAndAtivoTrue(unidadeId)
-                    .stream()
-                    .filter(u -> !(u.getTipoUsuario() == TipoUsuario.ADMINISTRADOR && u.getUnidade() == null))
-                    .toList();
+        Usuario logado = permissions.authenticated(authentication);
+        if (!permissions.isUnitAdmin(logado)) {
+            return usuarioRepository.findByAtivoTrue();
         }
-        return usuarioRepository.findByAtivoTrue();
+        Long unidadeId = permissions.unitId(logado);
+        // These reads also supply chat recipients and instructor selectors.
+        return unidadeId == null ? List.of() : usuarioRepository.findByUnidadeIdAndAtivoTrue(unidadeId);
     }
 
-    public Usuario buscarPorId(Long id) {
+    public Usuario buscarPorId(Long id, Authentication authentication) {
+        Usuario logado = permissions.authenticated(authentication);
+        Usuario usuario = buscarUsuario(id);
+        permissions.requireRead(logado, usuario);
+        return usuario;
+    }
+
+    private Usuario buscarUsuario(Long id) {
         return usuarioRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Usuário não encontrado"));
     }
 
+    @Transactional
     public Usuario atualizar(Long id, UsuarioUpdateDTO dto, Authentication authentication) {
-        Usuario logado = buscarLogado(authentication);
-        Usuario usuario = buscarPorId(id);
-        validarPodeGerenciarUsuario(logado, usuario, dto.getTipoUsuario(), dto.getUnidadeId());
+        Usuario logado = permissions.authenticated(authentication);
+        Usuario usuario = buscarUsuario(id);
+        permissions.requireUpdate(logado, usuario, dto.getTipoUsuario(), dto.getUnidadeId());
 
         Unidade unidade = null;
-        Long unidadeIdAlvo = isAdminUnidade(logado) && logado.getUnidade() != null
-                ? logado.getUnidade().getId()
-                : dto.getUnidadeId();
+        Long unidadeIdAlvo = dto.getUnidadeId();
+        if (unidadeIdAlvo == null && dto.getTipoUsuario() != TipoUsuario.ADMINISTRADOR) {
+            throw new BusinessRuleException("A unidade é obrigatória para este perfil.");
+        }
 
         if (unidadeIdAlvo != null) {
             unidade = unidadeRepository.findById(unidadeIdAlvo)
@@ -78,9 +86,9 @@ public class UsuarioService {
 
     @Transactional
     public void deletar(Long id, Authentication authentication) {
-        Usuario logado = buscarLogado(authentication);
-        Usuario usuario = buscarPorId(id);
-        validarPodeGerenciarUsuario(logado, usuario, usuario.getTipoUsuario(), usuario.getUnidade() != null ? usuario.getUnidade().getId() : null);
+        Usuario logado = permissions.authenticated(authentication);
+        Usuario usuario = buscarUsuario(id);
+        permissions.requireDelete(logado, usuario);
         if (logado != null && logado.getId() != null && logado.getId().equals(usuario.getId())) {
             throw new BusinessRuleException("Você não pode excluir o próprio login em uso.");
         }
@@ -139,27 +147,4 @@ public class UsuarioService {
         usuarioRepository.save(usuario);
     }
 
-    private Usuario buscarLogado(Authentication authentication) {
-        if (authentication == null || authentication.getName() == null) return null;
-        return usuarioRepository.findByEmailIgnoreCaseAndAtivoTrue(authentication.getName()).orElse(null);
-    }
-
-    private boolean isAdminUnidade(Usuario usuario) {
-        return usuario != null && (usuario.getTipoUsuario() == TipoUsuario.ADMIN_UNIDADE || (usuario.getTipoUsuario() == TipoUsuario.ADMINISTRADOR && usuario.getUnidade() != null));
-    }
-
-    private void validarPodeGerenciarUsuario(Usuario logado, Usuario alvo, TipoUsuario novoTipo, Long novaUnidadeId) {
-        if (!isAdminUnidade(logado)) return;
-        if (alvo != null && alvo.getTipoUsuario() == TipoUsuario.ADMINISTRADOR && alvo.getUnidade() == null) {
-            throw new BusinessRuleException("Administrador da unidade não pode alterar administrador geral.");
-        }
-        if (novoTipo == TipoUsuario.ADMINISTRADOR && novaUnidadeId == null) {
-            throw new BusinessRuleException("Administrador da unidade não pode criar ou alterar administrador geral.");
-        }
-        Long unidadeLogado = logado.getUnidade() != null ? logado.getUnidade().getId() : null;
-        Long unidadeAlvo = alvo != null && alvo.getUnidade() != null ? alvo.getUnidade().getId() : novaUnidadeId;
-        if (unidadeLogado == null || unidadeAlvo == null || !unidadeLogado.equals(unidadeAlvo)) {
-            throw new BusinessRuleException("Administrador da unidade só pode gerenciar usuários da própria unidade.");
-        }
-    }
 }
