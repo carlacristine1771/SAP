@@ -32,12 +32,17 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .cors(withDefaults())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .exceptionHandling(ex -> ex.authenticationEntryPoint((request, response, exception) -> {
+                    response.setStatus(401);
+                    response.setContentType("application/json;charset=UTF-8");
+                    response.getWriter().write("{\"message\":\"Autenticação necessária. Entre novamente.\"}");
+                }))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.GET, "/unidades").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/auth/login", "/auth/logout").permitAll()
                         .requestMatchers(
                                 "/", "/index.html", "/favicon.ico",
                                 "/css/**", "/js/**", "/assets/**", "/pages/**", "/senasc.png",
-                                "/auth/**",
                                 "/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html"
                         ).permitAll()
                         .anyRequest().authenticated()

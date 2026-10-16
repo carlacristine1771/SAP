@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { api } from "../../api/client.ts";
 import { useTheme } from "../../hooks/useTheme.ts";
 import Icon from "./Icon.jsx";
 

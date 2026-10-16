@@ -2,3 +2,8 @@
 .env
 .env.*
 !.env.example
+
+# Evidencias locais de autenticacao; preservar sem versionar.
+/auth-postgres-run.log
+/auth-postgres-3311ef9ea4c1.log
+/frontend/test-results-postgres/.last-run.json
