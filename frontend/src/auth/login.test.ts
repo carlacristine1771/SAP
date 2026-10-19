@@ -27,6 +27,34 @@ afterEach(() => {
 });
 
 describe("first access authentication", () => {
+  it("clears the session when the backend rejects reuse of the temporary password", async () => {
+    const message =
+      "A nova senha deve ser diferente da senha temporária atual.";
+    fetchMock
+      .mockResolvedValueOnce(ok(session))
+      .mockResolvedValueOnce(ok({ message }, 400))
+      .mockResolvedValueOnce(ok({}));
+
+    await expect(
+      login(
+        "test@example.invalid",
+        "temporary-test",
+        () => {},
+        () => "temporary-test",
+      ),
+    ).rejects.toThrow(message);
+
+    expect(JSON.parse(String(fetchMock.mock.calls[1][1].body))).toEqual({
+      senhaAtual: "temporary-test",
+      novaSenha: "temporary-test",
+    });
+    expect(
+      new Headers(fetchMock.mock.calls[1][1].headers).get("Authorization"),
+    ).toBe(`Bearer ${session.token}`);
+    expect(localStorage.getItem("sap_token")).toBeNull();
+    expect(fetchMock.mock.calls[2][0]).toMatch(/auth\/logout$/);
+  });
+
   it("changes password with the new token and supports the next login", async () => {
     localStorage.setItem("sap_token", "previous-fictional-token");
     let password = "temporary-test";

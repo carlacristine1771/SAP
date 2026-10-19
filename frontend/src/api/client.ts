@@ -35,7 +35,9 @@ export async function apiRequest<T>(
   options: RequestInit = {},
 ): Promise<T> {
   const headers = new Headers(options.headers);
-  const token = localStorage.getItem("sap_token");
+  // Anonymous requests ("omit") never carry the stored token or cookies.
+  const anonymous = options.credentials === "omit";
+  const token = anonymous ? null : localStorage.getItem("sap_token");
   if (token && !headers.has("Authorization")) {
     headers.set("Authorization", `Bearer ${token}`);
   }
@@ -45,7 +47,7 @@ export async function apiRequest<T>(
   const response = await fetch(`${API_BASE_URL}${path}`, {
     ...options,
     headers,
-    credentials: "include",
+    credentials: anonymous ? "omit" : "include",
   });
   const parsed = parseResponse(await response.text());
   if (!response.ok) {
@@ -62,6 +64,9 @@ export async function apiRequest<T>(
 
 export const api = {
   get: <T = unknown>(path: string) => apiRequest<T>(path),
+  // Public endpoints: a stale session in the browser must not affect them.
+  getPublic: <T = unknown>(path: string) =>
+    apiRequest<T>(path, { credentials: "omit" }),
   post: <T = unknown>(path: string, body: unknown) =>
     apiRequest<T>(path, { method: "POST", body: JSON.stringify(body) }),
   put: <T = unknown>(path: string, body: unknown) =>

@@ -140,6 +140,10 @@ public class AuthService {
         if (!passwordEncoder.matches(dto.getSenhaAtual(), usuario.getSenha())) {
             throw new BusinessRuleException("Senha atual inválida");
         }
+        if (Boolean.TRUE.equals(usuario.getSenhaTemporaria())
+                && passwordEncoder.matches(dto.getNovaSenha(), usuario.getSenha())) {
+            throw new BusinessRuleException("A nova senha deve ser diferente da senha temporária atual.");
+        }
         usuario.setSenha(passwordEncoder.encode(dto.getNovaSenha()));
         usuario.setSenhaTemporaria(false);
         usuarioRepository.save(usuario);

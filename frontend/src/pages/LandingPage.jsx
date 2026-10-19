@@ -542,7 +542,7 @@ export default function LandingPage() {
   const unitsQuery = useQuery({
     queryKey: ["public", "units"],
     queryFn: async () => {
-      const data = await api.get("/unidades");
+      const data = await api.getPublic("/unidades");
       return Array.isArray(data) ? data : [];
     },
   });
