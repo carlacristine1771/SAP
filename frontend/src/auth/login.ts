@@ -23,7 +23,7 @@ export async function login(
     validateSession(session);
     if (session.senhaTemporaria) {
       const novaSenha = requestPassword();
-      if (!novaSenha || novaSenha.length < 6) {
+      if (!novaSenha?.trim() || novaSenha.length < 6) {
         throw new Error("A nova senha deve ter pelo menos 6 caracteres.");
       }
       await api.patch(

@@ -103,7 +103,7 @@ describe("first access authentication", () => {
     ).toBe("Bearer old-token");
   });
 
-  it.each([null, "", "short"])(
+  it.each([null, "", "short", "      "])(
     "clears session when password is cancelled or invalid: %s",
     async (password) => {
       localStorage.setItem("sap_token", "old-token");
