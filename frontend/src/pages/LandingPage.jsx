@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useModalFocus } from "../hooks/useModalFocus.ts";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "../api/client.ts";
 import { useSessionQuery } from "../api/panelQueries.ts";
@@ -237,6 +238,7 @@ function LoginModal({ profile, units, onClose, onSuccess }) {
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const modalRef = useRef(null);
+  useModalFocus(modalRef, true, onClose);
 
   const submit = useCallback(
     async (event) => {
@@ -273,7 +275,7 @@ function LoginModal({ profile, units, onClose, onSuccess }) {
           const nextPassword = window.prompt(
             "Este é seu primeiro acesso. Crie uma nova senha com pelo menos 6 caracteres:",
           );
-          if (!nextPassword || nextPassword.length < 6)
+          if (!nextPassword?.trim() || nextPassword.length < 6)
             return setError("A nova senha deve ter pelo menos 6 caracteres.");
           await api.patch("/auth/change-password", {
             senhaAtual: password,
@@ -292,37 +294,6 @@ function LoginModal({ profile, units, onClose, onSuccess }) {
     },
     [config.requiresUnit, onSuccess, password, profile, unitId, username],
   );
-
-  useEffect(() => {
-    const previousFocus = document.activeElement;
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    const onKeyDown = (event) => {
-      if (event.key === "Escape") onClose();
-      if (event.key !== "Tab" || !modalRef.current) return;
-      const focusable = [
-        ...modalRef.current.querySelectorAll(
-          'button:not([disabled]),input:not([disabled]),select:not([disabled]),[href],[tabindex]:not([tabindex="-1"])',
-        ),
-      ];
-      if (!focusable.length) return;
-      const first = focusable[0],
-        last = focusable[focusable.length - 1];
-      if (event.shiftKey && document.activeElement === first) {
-        event.preventDefault();
-        last.focus();
-      } else if (!event.shiftKey && document.activeElement === last) {
-        event.preventDefault();
-        first.focus();
-      }
-    };
-    document.addEventListener("keydown", onKeyDown);
-    return () => {
-      document.removeEventListener("keydown", onKeyDown);
-      document.body.style.overflow = previousOverflow;
-      previousFocus?.focus?.();
-    };
-  }, [onClose]);
 
   return (
     <div
@@ -450,7 +421,6 @@ function LoginModal({ profile, units, onClose, onSuccess }) {
                 value={unitId}
                 onChange={(event) => setUnitId(event.target.value)}
                 style={inputStyle}
-                autoFocus
               >
                 <option value="">Selecione sua unidade...</option>
                 {units.map((unit) => (
@@ -478,7 +448,6 @@ function LoginModal({ profile, units, onClose, onSuccess }) {
               style={inputStyle}
               placeholder="Seu usuário"
               autoComplete="username"
-              autoFocus={!config.requiresUnit}
             />
           </div>
           <div style={{ marginBottom: 20 }}>
