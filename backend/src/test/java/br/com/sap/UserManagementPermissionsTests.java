@@ -285,10 +285,10 @@ class UserManagementPermissionsTests {
 
     @ParameterizedTest
     @EnumSource(value = Profile.class, names = {"GLOBAL", "UNIT", "LEGACY_UNIT", "COORDINATION"})
-    void legitimateInstructorEditPreservesPasswordWhenOmittedOrBlank(Profile profile) throws Exception {
+    void legitimateInstructorEditPreservesPasswordWhenOmittedOrEmpty(Profile profile) throws Exception {
         Usuario actor = account(1L, profile, false);
         Usuario target = account(2L, Profile.INSTRUCTOR, false);
-        for (String password : Arrays.asList(null, "", "   ")) {
+        for (String password : Arrays.asList(null, "")) {
             Map<String, Object> payload = body(TipoUsuario.INSTRUTOR, 1L);
             payload.put("senha", password);
             mvc.perform(as(put("/usuarios/2").contentType(MediaType.APPLICATION_JSON)
@@ -298,6 +298,22 @@ class UserManagementPermissionsTests {
             assertThat(target.getUnidade().getId()).isEqualTo(1L);
         }
         verify(encoder, never()).encode(anyString());
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = Profile.class, names = {"GLOBAL", "UNIT", "LEGACY_UNIT", "COORDINATION"})
+    void legitimateInstructorEditRejectsBlankPasswordWithoutChangingIt(Profile profile) throws Exception {
+        Usuario actor = account(1L, profile, false);
+        Usuario target = account(2L, Profile.INSTRUCTOR, false);
+        Map<String, Object> payload = body(TipoUsuario.INSTRUTOR, 1L);
+        payload.put("senha", "   ");
+        mvc.perform(as(put("/usuarios/2").contentType(MediaType.APPLICATION_JSON)
+                .content(json.writeValueAsString(payload)), actor)).andExpect(status().isBadRequest());
+        assertThat(target.getSenha()).isEqualTo("original-hash");
+        assertThat(target.getTipoUsuario()).isEqualTo(TipoUsuario.INSTRUTOR);
+        assertThat(target.getUnidade().getId()).isEqualTo(1L);
+        verify(encoder, never()).encode(anyString());
+        verify(users, never()).save(any());
     }
 
     @Test
