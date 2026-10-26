@@ -68,7 +68,7 @@ public class AlunoService {
     }
 
     public AlunoResponseDTO criar(AlunoRequestDTO dto) {
-        if (alunoRepository.existsByCpf(dto.getCpf())) throw new BusinessRuleException("CPF já cadastrado");
+        validarDuplicidadeCpf(dto.getCpf(), null);
         Aluno aluno = new Aluno();
         aplicarDados(aluno, dto);
         aluno.setAtivo(true);
@@ -78,6 +78,7 @@ public class AlunoService {
 
     public AlunoResponseDTO atualizar(Long id, AlunoRequestDTO dto) {
         Aluno aluno = buscarAluno(id);
+        validarDuplicidadeCpf(dto.getCpf(), id);
         aplicarDados(aluno, dto);
         alunoRepository.save(aluno);
         return converterParaDTO(aluno);
@@ -86,6 +87,12 @@ public class AlunoService {
     public void deletar(Long id) {
         Aluno aluno = buscarAluno(id);
         alunoRepository.delete(aluno);
+    }
+
+    private void validarDuplicidadeCpf(String cpf, Long id) {
+        if (alunoRepository.existsByCpfNormalizadoExcluindoId(cpf.replace(".", "").replace("-", ""), id)) {
+            throw new BusinessRuleException("CPF já cadastrado");
+        }
     }
 
     private void aplicarDados(Aluno aluno, AlunoRequestDTO dto) {

@@ -18,6 +18,13 @@ public interface AlunoRepository
 
     boolean existsByCpf(String cpf);
 
+    @Query("""
+            select count(a) > 0 from Aluno a
+            where replace(replace(a.cpf, '.', ''), '-', '') = :cpf
+              and (:id is null or a.id <> :id)
+            """)
+    boolean existsByCpfNormalizadoExcluindoId(@Param("cpf") String cpf, @Param("id") Long id);
+
     List<Aluno> findByTurno(Turno turno);
 
     Long countByAtivoTrue();
