@@ -41,7 +41,7 @@ const pageResponse = <T>(content: T[]) => ({
 
 async function mockApi(page: Page, role: "PSICOLOGO" | "COORDENACAO") {
   await page.addInitScript(() =>
-    localStorage.setItem("sap_token", "fictional-panel-token"),
+    localStorage.setItem("sap_token", "test-session"),
   );
   const responses: Record<string, unknown> = {
     "/auth/me": {
@@ -71,7 +71,10 @@ async function mockApi(page: Page, role: "PSICOLOGO" | "COORDENACAO") {
     )
       return route.abort();
     const response = responses[url.pathname];
-    if (response === undefined) return route.continue();
+    if (response === undefined) {
+      if (url.origin !== "http://127.0.0.1:4174") return route.abort();
+      return route.continue();
+    }
     if (request.method() !== "GET") {
       return route.fulfill({ status: 200, json: {} });
     }

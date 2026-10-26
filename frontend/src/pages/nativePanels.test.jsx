@@ -81,7 +81,7 @@ async function expectNoStructuralAccessibilityViolations(container) {
 }
 
 beforeEach(() => {
-  localStorage.setItem("sap_token", "fictional-panel-token");
+  localStorage.setItem("sap_token", "test-session");
   queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false, staleTime: 30_000 } },
   });
