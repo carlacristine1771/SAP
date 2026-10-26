@@ -1,13 +1,13 @@
 package br.com.sap.controller;
 
+import br.com.sap.dto.unidade.UnidadeRequestDTO;
 import br.com.sap.entity.Unidade;
 import br.com.sap.service.UnidadeService;
-
-import jakarta.validation.Valid;
 
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -37,24 +37,27 @@ public class UnidadeController {
         );
     }
 
+    // Validação do DTO no serviço, após a autorização (403 antes de 400).
     @PostMapping
     public ResponseEntity<Unidade> criar(
-            @RequestBody @Valid Unidade unidade
+            @RequestBody UnidadeRequestDTO dto,
+            Authentication authentication
     ) {
 
         return ResponseEntity.ok(
-                unidadeService.criar(unidade)
+                unidadeService.criar(dto, authentication)
         );
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<Unidade> atualizar(
             @PathVariable Long id,
-            @RequestBody @Valid Unidade unidade
+            @RequestBody UnidadeRequestDTO dto,
+            Authentication authentication
     ) {
 
         return ResponseEntity.ok(
-                unidadeService.atualizar(id, unidade)
+                unidadeService.atualizar(id, dto, authentication)
         );
     }
 
