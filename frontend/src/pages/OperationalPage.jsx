@@ -12,6 +12,7 @@ import { useUnsavedChanges } from "../hooks/useUnsavedChanges.ts";
 import { useDebouncedValue } from "../hooks/useDebouncedValue.ts";
 import {
   appointmentSchema,
+  instructorSchema,
   studentSchema,
   validationMessage,
 } from "../validation/schemas.ts";
@@ -19,6 +20,7 @@ import ChatPanel from "../components/panel/ChatPanel.jsx";
 import Icon from "../components/panel/Icon.jsx";
 import OperationalShell from "../components/panel/OperationalShell.jsx";
 import AccessibleModal from "../components/ui/AccessibleModal.tsx";
+import CpfInput from "../components/ui/CpfInput.tsx";
 import Pagination from "../components/ui/Pagination.tsx";
 import {
   ErrorMessage,
@@ -964,6 +966,11 @@ export default function OperationalPage({ profile }) {
     const selectedClass = scoped.classes.find(
       (item) => Number(item.id) === Number(studentForm.turmaId),
     );
+    if (
+      !selectedClass ||
+      Number(selectedClass.cursoId) !== Number(studentForm.cursoId)
+    )
+      return setStudentError("Selecione uma turma do curso informado.");
     try {
       await dataMutation.mutateAsync(() =>
         api.post("/alunos", {
@@ -1069,13 +1076,13 @@ export default function OperationalPage({ profile }) {
         else await dataMutation.mutateAsync(() => api.post("/turmas", body));
       }
       if (kind === "instructor") {
-        if (
-          !editorForm.nome.trim() ||
-          !editorForm.usuario.trim() ||
-          !editorForm.email.trim() ||
-          (!item.id && !editorForm.senha)
-        )
-          return setEditorError("Preencha todos os campos obrigatórios.");
+        const validation = instructorSchema.safeParse(editorForm);
+        if (!validation.success)
+          return setEditorError(validationMessage(validation));
+        if (!item.id && !editorForm.senha)
+          return setEditorError(
+            "Informe a senha inicial com ao menos 6 caracteres.",
+          );
         if (item.id)
           await dataMutation.mutateAsync(() =>
             api.put(`/usuarios/${item.id}`, {
@@ -1185,7 +1192,7 @@ export default function OperationalPage({ profile }) {
         title="Cadastrar Aluno"
         onClose={closeStudent}
       >
-        <form onSubmit={saveStudent}>
+        <form onSubmit={saveStudent} noValidate>
           <ErrorMessage text={studentError} />
           <div className="admin-form-grid">
             <div className="admin-form-full">
@@ -1210,13 +1217,11 @@ export default function OperationalPage({ profile }) {
             </div>
             <div>
               <label className="form-label">CPF *</label>
-              <input
+              <CpfInput
                 className="form-control"
+                aria-label="CPF"
                 value={studentForm.cpf}
-                maxLength="14"
-                onChange={(e) =>
-                  setStudentForm({ ...studentForm, cpf: e.target.value })
-                }
+                onChange={(cpf) => setStudentForm({ ...studentForm, cpf })}
               />
             </div>
             <div>
@@ -1299,6 +1304,8 @@ export default function OperationalPage({ profile }) {
               <input
                 type="email"
                 className="form-control"
+                placeholder="Exemplo: teste@gmail.com"
+                autoComplete="email"
                 value={studentForm.email}
                 onChange={(e) =>
                   setStudentForm({ ...studentForm, email: e.target.value })
@@ -1342,7 +1349,7 @@ export default function OperationalPage({ profile }) {
         }
         onClose={closeEditor}
       >
-        <form onSubmit={saveEditor}>
+        <form onSubmit={saveEditor} noValidate>
           <ErrorMessage text={editorError} />
           {editor?.kind === "course" && (
             <div style={{ display: "grid", gap: 14 }}>
@@ -1451,7 +1458,8 @@ export default function OperationalPage({ profile }) {
               <input
                 type="email"
                 className="form-control"
-                placeholder="E-mail"
+                placeholder="Exemplo: teste@gmail.com"
+                autoComplete="email"
                 value={editorForm.email || ""}
                 onChange={(e) =>
                   setEditorForm({ ...editorForm, email: e.target.value })

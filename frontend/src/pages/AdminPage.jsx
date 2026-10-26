@@ -569,7 +569,7 @@ function CreateUserPanel({
   const validationError = Object.values(errors).find(Boolean)?.message;
   return (
     <div className="panel-section active fade-up">
-      <form className="form-card" onSubmit={submit}>
+      <form className="form-card" onSubmit={submit} noValidate>
         <h2
           style={{
             fontFamily: "var(--font-display)",
@@ -633,7 +633,7 @@ function CreateUserPanel({
               type="email"
               className="form-control"
               {...register("email")}
-              placeholder="ex: profissional@sap.com"
+              placeholder="Exemplo: teste@gmail.com"
               autoComplete="email"
             />
           </div>
@@ -802,7 +802,8 @@ export default function AdminPage() {
     setUnitForm({ nome: unit?.nome || "", endereco: unit?.endereco || "" });
     setUnitError("");
   };
-  const saveUnit = async () => {
+  const saveUnit = async (event) => {
+    event?.preventDefault();
     setUnitError("");
     const validation = unitSchema.safeParse(unitForm);
     if (!validation.success) return setUnitError(validationMessage(validation));
@@ -941,59 +942,61 @@ export default function AdminPage() {
         onClose={closeUnit}
         maxWidth={480}
       >
-        <ErrorMessage>{unitError}</ErrorMessage>
-        <div style={{ marginBottom: 14 }}>
-          <label className="form-label">
-            Nome da Unidade <span style={{ color: "var(--s-cancel)" }}>*</span>
-          </label>
-          <input
-            className="form-control"
-            value={unitForm.nome}
-            onChange={(event) =>
-              setUnitForm((current) => ({
-                ...current,
-                nome: event.target.value,
-              }))
-            }
-            placeholder="Ex: Nome da unidade"
-          />
-        </div>
-        <div style={{ marginBottom: 20 }}>
-          <label className="form-label">
-            Região <span style={{ color: "var(--s-cancel)" }}>*</span>
-          </label>
-          <input
-            className="form-control"
-            value={unitForm.endereco}
-            onChange={(event) =>
-              setUnitForm((current) => ({
-                ...current,
-                endereco: event.target.value,
-              }))
-            }
-            placeholder="Ex: Região Oeste"
-          />
-        </div>
-        <div style={{ display: "flex", gap: 10, marginTop: 4 }}>
-          <button
-            type="button"
-            className="btn btn-outline"
-            onClick={closeUnit}
-            style={{ flex: 1 }}
-          >
-            Cancelar
-          </button>
-          <button
-            type="button"
-            className="btn admin-blue-btn"
-            onClick={saveUnit}
-            disabled={dataMutation.isPending}
-            style={{ flex: 2 }}
-          >
-            <Icon name="save" strokeWidth={2.2} />
-            Salvar
-          </button>
-        </div>
+        <form onSubmit={saveUnit}>
+          <ErrorMessage>{unitError}</ErrorMessage>
+          <div style={{ marginBottom: 14 }}>
+            <label className="form-label">
+              Nome da Unidade{" "}
+              <span style={{ color: "var(--s-cancel)" }}>*</span>
+            </label>
+            <input
+              className="form-control"
+              value={unitForm.nome}
+              onChange={(event) =>
+                setUnitForm((current) => ({
+                  ...current,
+                  nome: event.target.value,
+                }))
+              }
+              placeholder="Ex: Nome da unidade"
+            />
+          </div>
+          <div style={{ marginBottom: 20 }}>
+            <label className="form-label">
+              Região <span style={{ color: "var(--s-cancel)" }}>*</span>
+            </label>
+            <input
+              className="form-control"
+              value={unitForm.endereco}
+              onChange={(event) =>
+                setUnitForm((current) => ({
+                  ...current,
+                  endereco: event.target.value,
+                }))
+              }
+              placeholder="Ex: Região Oeste"
+            />
+          </div>
+          <div style={{ display: "flex", gap: 10, marginTop: 4 }}>
+            <button
+              type="button"
+              className="btn btn-outline"
+              onClick={closeUnit}
+              style={{ flex: 1 }}
+            >
+              Cancelar
+            </button>
+            <button
+              type="submit"
+              className="btn admin-blue-btn"
+              disabled={dataMutation.isPending}
+              style={{ flex: 2 }}
+            >
+              <Icon name="save" strokeWidth={2.2} />
+              Salvar
+            </button>
+          </div>
+        </form>
       </AccessibleModal>
 
       <AccessibleModal
