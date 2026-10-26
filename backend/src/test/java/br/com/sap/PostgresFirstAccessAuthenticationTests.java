@@ -1,17 +1,27 @@
 package br.com.sap;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Import;
 import org.springframework.jdbc.core.JdbcTemplate;
 import java.nio.file.Path;
 import java.util.concurrent.TimeUnit;
 import static org.assertj.core.api.Assertions.assertThat;
 
-/** Same regression cases against PostgreSQL, plus real HTTP/browser integration. */
+/**
+ * Same regression cases against PostgreSQL, plus real HTTP/browser integration.
+ * Runs only when SAP_AUTH_POSTGRES=true (run-unit-name-postgres.ps1 -Suite first-access).
+ * DisposablePostgresGuard checks the effective connection when the DataSource is
+ * created, before Hibernate's create-drop, and refuses any database that is not a
+ * fresh, empty, unshared local PostgreSQL.
+ */
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.DEFINED_PORT, properties = {
     "spring.config.location=classpath:/application-auth-postgres.properties"
 })
+@Import(DisposablePostgresGuard.class)
+@EnabledIfEnvironmentVariable(named = "SAP_AUTH_POSTGRES", matches = "true")
 class PostgresFirstAccessAuthenticationTests extends FirstAccessAuthenticationTests {
     @Autowired JdbcTemplate jdbc;
 
