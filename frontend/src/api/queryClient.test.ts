@@ -1,3 +1,4 @@
+// @vitest-environment jsdom
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { api, ApiError } from "./client.ts";
 import { queryClient } from "./queryClient.ts";
