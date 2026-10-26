@@ -8,6 +8,7 @@ import br.com.sap.exception.ResourceNotFoundException;
 import br.com.sap.repository.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import java.util.List;
 
@@ -46,6 +47,7 @@ public class TurmaService {
             throw new BusinessRuleException("O curso selecionado não pertence à unidade informada.");
         }
         Usuario instrutor = dto.getInstrutorId()==null?null:buscarUsuario(dto.getInstrutorId());
+        validarInstrutorDaCoordenacao(instrutor, unidade, authentication);
         if (instrutor != null && instrutor.getTipoUsuario() != TipoUsuario.INSTRUTOR) throw new BusinessRuleException("O responsável da turma precisa ser instrutor");
         if (instrutor != null && instrutor.getUnidade() != null && !instrutor.getUnidade().getId().equals(unidade.getId())) throw new BusinessRuleException("O instrutor selecionado não pertence à unidade da turma.");
         String nomeTurma = dto.getNome() == null ? "" : dto.getNome().trim();
@@ -71,6 +73,7 @@ public class TurmaService {
             throw new BusinessRuleException("O curso selecionado não pertence à unidade informada.");
         }
         Usuario instrutor = dto.getInstrutorId()==null?null:buscarUsuario(dto.getInstrutorId());
+        validarInstrutorDaCoordenacao(instrutor, unidade, authentication);
         if (instrutor != null && instrutor.getTipoUsuario() != TipoUsuario.INSTRUTOR) throw new BusinessRuleException("O responsável da turma precisa ser instrutor");
         if (instrutor != null && instrutor.getUnidade() != null && !instrutor.getUnidade().getId().equals(unidade.getId())) throw new BusinessRuleException("O instrutor selecionado não pertence à unidade da turma.");
         if (turmaRepository.existsByNomeIgnoreCaseAndUnidadeAndAtivoTrueAndIdNot(nomeTurma, unidade, turma.getId())) {
@@ -89,6 +92,10 @@ public class TurmaService {
 
         private Unidade unidadePermitida(Long unidadeId, Authentication authentication) {
         Usuario logado = buscarUsuarioLogado(authentication);
+        if (logado != null && logado.getTipoUsuario() == TipoUsuario.COORDENACAO) {
+            exigirUnidadeDaCoordenacao(logado, unidadeId);
+            return logado.getUnidade();
+        }
         if (logado != null && (logado.getTipoUsuario() == TipoUsuario.ADMIN_UNIDADE || (logado.getTipoUsuario() == TipoUsuario.ADMINISTRADOR && logado.getUnidade() != null))) {
             if (logado.getUnidade() == null) throw new BusinessRuleException("Administrador da unidade sem unidade vinculada.");
             return logado.getUnidade();
@@ -98,12 +105,31 @@ public class TurmaService {
 
     private void validarTurmaDaUnidade(Turma turma, Authentication authentication) {
         Usuario logado = buscarUsuarioLogado(authentication);
+        if (logado != null && logado.getTipoUsuario() == TipoUsuario.COORDENACAO) {
+            exigirUnidadeDaCoordenacao(logado, turma.getUnidade() == null ? null : turma.getUnidade().getId());
+        }
         if (logado != null && (logado.getTipoUsuario() == TipoUsuario.ADMIN_UNIDADE || (logado.getTipoUsuario() == TipoUsuario.ADMINISTRADOR && logado.getUnidade() != null))) {
             Long unidadeLogado = logado.getUnidade() != null ? logado.getUnidade().getId() : null;
             Long unidadeTurma = turma.getUnidade() != null ? turma.getUnidade().getId() : null;
             if (unidadeLogado == null || unidadeTurma == null || !unidadeLogado.equals(unidadeTurma)) {
                 throw new BusinessRuleException("Administrador da unidade só pode alterar turmas da própria unidade.");
             }
+        }
+    }
+
+    private void exigirUnidadeDaCoordenacao(Usuario logado, Long unidadeId) {
+        if (logado.getUnidade() == null || logado.getUnidade().getId() == null
+                || !logado.getUnidade().getId().equals(unidadeId)) {
+            throw new AccessDeniedException("Coordenação só pode vincular instrutores em turmas da própria unidade.");
+        }
+    }
+
+    private void validarInstrutorDaCoordenacao(Usuario instrutor, Unidade unidade, Authentication authentication) {
+        Usuario logado = buscarUsuarioLogado(authentication);
+        if (instrutor == null || logado == null || logado.getTipoUsuario() != TipoUsuario.COORDENACAO) return;
+        if (instrutor.getTipoUsuario() != TipoUsuario.INSTRUTOR || !Boolean.TRUE.equals(instrutor.getAtivo())
+                || instrutor.getUnidade() == null || !unidade.getId().equals(instrutor.getUnidade().getId())) {
+            throw new AccessDeniedException("Instrutor não autorizado para a unidade da turma.");
         }
     }
 

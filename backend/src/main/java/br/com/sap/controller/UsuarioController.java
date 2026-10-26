@@ -24,8 +24,8 @@ public class UsuarioController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Usuario> buscarPorId(@PathVariable Long id) {
-        return ResponseEntity.ok(usuarioService.buscarPorId(id));
+    public ResponseEntity<Usuario> buscarPorId(@PathVariable Long id, Authentication authentication) {
+        return ResponseEntity.ok(usuarioService.buscarPorId(id, authentication));
     }
 
     @PutMapping("/{id}")

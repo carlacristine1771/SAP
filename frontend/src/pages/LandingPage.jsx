@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "../api/client.ts";
+import { login } from "../auth/login.ts";
 import { useSessionQuery } from "../api/panelQueries.ts";
 import {
   backendRoleToFrontend,
@@ -249,41 +250,30 @@ function LoginModal({ profile, units, onClose, onSuccess }) {
 
       setSubmitting(true);
       try {
-        const response = await api.post("/auth/login", {
-          email: username.trim(),
-          senha: password,
-        });
-        const actualRole = backendRoleToFrontend(response.tipoUsuario);
-        if (actualRole !== profile) {
-          await api.post("/auth/logout");
-          return setError(
-            `Este usuário existe, mas pertence ao perfil ${actualRole || "desconhecido"}. Entre pelo card correto.`,
-          );
-        }
-        if (
-          config.requiresUnit &&
-          unitCompatibilityId(response.unidadeId) !== unitId
-        ) {
-          await api.post("/auth/logout");
-          return setError(
-            "Acesso negado: este usuário não pertence à unidade selecionada.",
-          );
-        }
-        if (response.senhaTemporaria) {
-          const nextPassword = window.prompt(
+        const response = await login(
+          username.trim(),
+          password,
+          (session) => {
+            const actualRole = backendRoleToFrontend(session.tipoUsuario);
+            if (actualRole !== profile) {
+              throw new Error(
+                `Este usuário existe, mas pertence ao perfil ${actualRole || "desconhecido"}. Entre pelo card correto.`,
+              );
+            }
+            if (
+              config.requiresUnit &&
+              unitCompatibilityId(session.unidadeId) !== unitId
+            ) {
+              throw new Error(
+                "Acesso negado: este usuário não pertence à unidade selecionada.",
+              );
+            }
+          },
+          () => window.prompt(
             "Este é seu primeiro acesso. Crie uma nova senha com pelo menos 6 caracteres:",
-          );
-          if (!nextPassword || nextPassword.length < 6)
-            return setError("A nova senha deve ter pelo menos 6 caracteres.");
-          await api.patch("/auth/change-password", {
-            senhaAtual: password,
-            novaSenha: nextPassword,
-          });
-        }
-        console.log("LOGIN EXECUTADO NOVAMENTE");
-        localStorage.setItem("sap_token", response.token);
-        localStorage.setItem("sap_token", response.token);
-        onSuccess(actualRole);
+          ),
+        );
+        onSuccess(backendRoleToFrontend(response.tipoUsuario));
       } catch (requestError) {
         setError(requestError.message || "Não foi possível entrar.");
       } finally {
@@ -552,7 +542,7 @@ export default function LandingPage() {
   const unitsQuery = useQuery({
     queryKey: ["public", "units"],
     queryFn: async () => {
-      const data = await api.get("/unidades");
+      const data = await api.getPublic("/unidades");
       return Array.isArray(data) ? data : [];
     },
   });

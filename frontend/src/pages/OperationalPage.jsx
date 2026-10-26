@@ -1421,7 +1421,14 @@ export default function OperationalPage({ profile }) {
               >
                 <option value="">Sem instrutor</option>
                 {data.users
-                  .filter((u) => u.tipoUsuario === "INSTRUTOR")
+                  .filter(
+                    (u) =>
+                      u.tipoUsuario === "INSTRUTOR" &&
+                      u.ativo === true &&
+                      session?.unidadeId != null &&
+                      u.unidade?.id != null &&
+                      Number(u.unidade.id) === Number(session.unidadeId),
+                  )
                   .map((u) => (
                     <option value={u.id} key={u.id}>
                       {u.nome}

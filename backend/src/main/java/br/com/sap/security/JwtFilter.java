@@ -50,6 +50,7 @@ public class JwtFilter extends OncePerRequestFilter {
                 || path.equals("/swagger-ui.html")
                 || path.equals("/auth/login")
                 || path.equals("/auth/logout")
+                // Public unit list for the login screen: a stale browser token must not turn it into 401/403.
                 || (path.equals("/unidades") && "GET".equalsIgnoreCase(method));
     }
 
