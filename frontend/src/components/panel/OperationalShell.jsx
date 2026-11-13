@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { api } from "../../api/client.ts";
 import { useMobileMenu } from "../../hooks/useMobileMenu.ts";
 import { useTheme } from "../../hooks/useTheme.ts";
 import Icon from "./Icon.jsx";
@@ -40,15 +41,20 @@ export default function OperationalShell({
   useEffect(() => {
     document.title = `Painel ${label} — SAP SENAC DF`;
   }, [label]);
-const logout = (event) => {
-  event.preventDefault();
-  event.stopPropagation();
+  // Same flow as the other panels: the server expires the session cookies.
+  const logout = async (event) => {
+    event.preventDefault();
+    event.stopPropagation();
 
-  alert("O botão de logout foi acionado!");
-
-  localStorage.removeItem("sap_token");
-  window.location.replace("/?logout=1");
-};
+    try {
+      await api.post("/auth/logout");
+    } catch (error) {
+      console.error("Erro ao fazer logout:", error);
+    } finally {
+      localStorage.removeItem("sap_token");
+      window.location.replace("/?logout=1");
+    }
+  };
   return (
     <>
       <link rel="stylesheet" href="/css/global.css" />

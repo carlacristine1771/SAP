@@ -41,20 +41,18 @@ export default function PanelShell({
   }, []);
 
   const logout = async (event) => {
-    console.log("LOGOUT FOI CLICADO");
-    
-  event.preventDefault();
-  event.stopPropagation();
+    event.preventDefault();
+    event.stopPropagation();
 
-  try {
-    await api.post("/auth/logout");
-  } catch (error) {
-    console.error("Erro ao fazer logout:", error);
-  } finally {
-    localStorage.removeItem("sap_token");
-    window.location.replace("/?logout=1");
-  }
-};
+    try {
+      await api.post("/auth/logout");
+    } catch (error) {
+      console.error("Erro ao fazer logout:", error);
+    } finally {
+      localStorage.removeItem("sap_token");
+      window.location.replace("/?logout=1");
+    }
+  };
 
   return (
     <>

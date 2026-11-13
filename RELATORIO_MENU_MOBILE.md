@@ -53,9 +53,9 @@ chamadas de logout e a permanência dos cookies.
 Em `PanelShell.jsx`, a função `logout` também contém
 `console.log("LOGOUT FOI CLICADO")`.
 
-**Nenhuma dessas funções foi alterada.** O botão "Sair" dentro do menu chama a
-mesma função `logout` de cada componente. A correção funcional fica para um
-commit separado.
+**Nenhuma dessas funções foi alterada no primeiro commit.** O botão "Sair"
+dentro do menu chama a mesma função `logout` de cada componente. A correção
+está na seção "Terceira etapa".
 
 ### Faixa de 901 a 960px sem navegação (pré-existente)
 
@@ -233,15 +233,59 @@ Em nenhuma largura houve rolagem horizontal. Antes da correção, nas larguras d
 
 Os 5 aprovados a mais são os testes de desktop em 930px.
 
+## Terceira etapa: logout de Coordenação e Instrutor
+
+Correção funcional, separada das mudanças visuais. Nenhum arquivo de backend ou
+de autenticação do servidor foi alterado.
+
+### Alteração
+
+| Arquivo | Alteração |
+| --- | --- |
+| `frontend/src/components/panel/OperationalShell.jsx` | `logout` passa a chamar `POST /auth/logout`, como os painéis de administração, antes de remover `sap_token` e voltar à página inicial. O `alert` de depuração foi removido. Se a chamada falhar, o erro é registrado no console e a saída local continua |
+| `frontend/src/components/panel/PanelShell.jsx` | Remove o `console.log("LOGOUT FOI CLICADO")` e corrige a indentação da função; o comportamento não muda |
+| `frontend/e2e/session-diagnosis.spec.ts` | O teste que registrava o defeito (zero chamadas de logout) foi substituído por cinco testes, um por perfil |
+
+O painel da Psicologia não foi alterado. Foram mantidos dois `console.error`
+que registram falhas reais: o da chamada de logout e o de `AppErrorBoundary`.
+
+### Verificação por perfil
+
+Para administrador geral, administrador de unidade, coordenação, instrutor e
+psicóloga, em desktop e celular, o teste confirma que o botão Sair:
+
+- faz exatamente uma chamada a `/auth/logout`;
+- remove `sap_token`, também na outra aba aberta;
+- volta para a página inicial;
+- não abre nenhum diálogo (`alert`, `confirm` ou `prompt`).
+
+Antes da correção, o teste anterior afirmava zero chamadas a `/auth/logout` para
+a Coordenação e passava em todas as execuções. A API é simulada, então a
+expiração efetiva dos cookies pelo servidor não foi verificada nesses testes.
+
+### Testes depois da correção
+
+| Verificação | Resultado |
+| --- | --- |
+| `e2e/session-diagnosis.spec.ts` | 14 aprovados (2 casos de abas e 5 de logout, em desktop e celular) |
+| `playwright.auth.config.ts` (primeiro acesso, logout e novo login) | 6/6 aprovados |
+| `playwright.p0.config.ts` | 22 aprovados, 7 falhas (as mesmas pré-existentes), 1 ignorado |
+| Playwright, padrão com API local | 107 aprovados, 26 falhas (as mesmas pré-existentes), 31 ignorados |
+| Playwright, configuração padrão | 102 aprovados, 31 falhas (as mesmas pré-existentes), 31 ignorados |
+| `npm test`, `npm run typecheck` e `npm run build` | 54/54 aprovados; tipos e build aprovados |
+| Comparação visual do desktop | 60 de 60 idênticas a `fe77bf2` |
+
+Os 8 aprovados a mais nas rodadas padrão vêm da troca de um caso de logout
+(Coordenação) por cinco, nos dois projetos.
+
 ## Pendências
 
-1. Commit separado com a correção do logout de Coordenação e Instrutor e a
-   remoção do `alert` e do `console.log`, com ajuste de `session-diagnosis.spec.ts`.
-2. Responsividade de formulários, modais, cards, tabelas, gráficos e calendários.
-3. Atualizar os scripts manuais `scripts/audit-mobile-panels.mjs` e
+1. Responsividade de formulários, modais, cards, tabelas, gráficos e calendários.
+2. Atualizar os scripts manuais `scripts/audit-mobile-panels.mjs` e
    `scripts/smoke-psychologist.mjs`, que ainda procuram `.mobile-logout`.
-4. As regras antigas da barra inferior e de `.mobile-logout` continuam em
+3. As regras antigas da barra inferior e de `.mobile-logout` continuam em
    `global.css` e podem ser removidas depois.
-5. Unificar os três componentes de painel.
+4. Unificar os três componentes de painel e a função de logout, hoje repetida.
+5. Validar o logout contra o backend real, incluindo a expiração dos cookies.
 6. Revisar as falhas pré-existentes de `panels.spec.ts` (origens dos mocks) e de
    `permissions.p0.spec.ts:251`.

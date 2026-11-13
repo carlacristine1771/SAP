@@ -15,20 +15,21 @@ async function mockSessions(context: BrowserContext) {
       return route.fulfill({ status: 204 });
     }
     if (url.pathname === "/auth/me") {
-      const authorization = request.headers().authorization;
+      const token = request.headers().authorization?.replace("Bearer ", "");
       const role =
-        authorization === "Bearer test-psychologist"
-          ? "PSICOLOGO"
-          : authorization === "Bearer test-coordination"
-            ? "COORDENACAO"
-            : "ADMINISTRADOR";
+        {
+          "test-psychologist": "PSICOLOGO",
+          "test-coordination": "COORDENACAO",
+          "test-instructor": "INSTRUTOR",
+        }[token ?? ""] ?? "ADMINISTRADOR";
+      const globalAdmin = role === "ADMINISTRADOR" && token !== "test-unit-admin";
       return route.fulfill({
         status: 200,
         json: {
           id: role === "ADMINISTRADOR" ? 10 : 20,
           nome: "Usuário de teste",
           tipoUsuario: role,
-          unidadeId: role === "ADMINISTRADOR" ? null : 1,
+          unidadeId: globalAdmin ? null : 1,
           unidade: "Unidade de teste",
         },
       });
@@ -100,48 +101,49 @@ test("contextos de navegador separados permitem perfis simultâneos", async ({
   }
 });
 
-test("logout da coordenação remove o token compartilhado mas não solicita remoção dos cookies", async ({
-  page,
-  context,
-}) => {
-  const logoutRequests = await mockSessions(context);
-  await page.goto("/");
-  await page.evaluate(() =>
-    localStorage.setItem("sap_token", "test-coordination"),
-  );
-  await context.addCookies([
-    {
-      name: "SAP_AUTH",
-      value: "test-cookie",
-      url: "http://127.0.0.1:4174",
-      httpOnly: true,
-    },
-    {
-      name: "SAP_SESSION",
-      value: "test-session-cookie",
-      url: "http://127.0.0.1:4174",
-    },
-  ]);
-  await page.goto("/painel/coordenacao/home");
-  await expect(page.locator(".app-shell")).toBeVisible();
-  const second = await context.newPage();
-  await second.goto("/");
-  await expect(second).toHaveURL(/\/painel\/coordenacao$/);
-  page.once("dialog", (dialog) => dialog.accept());
-  // No celular (até 900px), Sair fica dentro do menu lateral.
-  if ((page.viewportSize()?.width ?? 1280) <= 900) {
-    await page.getByRole("button", { name: "Abrir menu" }).click();
-  }
-  await page.getByRole("button", { name: "Sair" }).click();
-  await expect(page).toHaveURL("http://127.0.0.1:4174/");
-  expect(
-    await page.evaluate(() => localStorage.getItem("sap_token")),
-  ).toBeNull();
-  expect(
-    await second.evaluate(() => localStorage.getItem("sap_token")),
-  ).toBeNull();
-  expect(logoutRequests).toHaveLength(0);
-  const cookieNames = (await context.cookies()).map((cookie) => cookie.name);
-  expect(cookieNames).toContain("SAP_AUTH");
-  expect(cookieNames).toContain("SAP_SESSION");
-});
+// Every panel asks the server to expire the session cookies on logout.
+const logoutProfiles = [
+  { name: "administrador geral", token: "test-admin", path: "/painel/admin" },
+  { name: "administrador de unidade", token: "test-unit-admin", path: "/painel/admin" },
+  { name: "coordenação", token: "test-coordination", path: "/painel/coordenacao" },
+  { name: "instrutor", token: "test-instructor", path: "/painel/instrutor" },
+  { name: "psicóloga", token: "test-psychologist", path: "/painel/psicologo" },
+];
+
+for (const profile of logoutProfiles) {
+  test(`logout de ${profile.name} chama /auth/logout e remove o token compartilhado`, async ({
+    page,
+    context,
+  }) => {
+    const logoutRequests = await mockSessions(context);
+    const dialogs: string[] = [];
+    page.on("dialog", async (dialog) => {
+      dialogs.push(dialog.message());
+      await dialog.dismiss();
+    });
+    await page.goto("/");
+    await page.evaluate(
+      (token) => localStorage.setItem("sap_token", token),
+      profile.token,
+    );
+    await page.goto(profile.path);
+    await expect(page.locator(".app-shell")).toBeVisible();
+    const second = await context.newPage();
+    await second.goto("/");
+    await expect(second).toHaveURL(new RegExp(`${profile.path}$`));
+    // No celular (até 900px), Sair fica dentro do menu lateral.
+    if ((page.viewportSize()?.width ?? 1280) <= 900) {
+      await page.getByRole("button", { name: "Abrir menu" }).click();
+    }
+    await page.getByRole("button", { name: "Sair" }).click();
+    await expect(page).toHaveURL("http://127.0.0.1:4174/");
+    expect(
+      await page.evaluate(() => localStorage.getItem("sap_token")),
+    ).toBeNull();
+    expect(
+      await second.evaluate(() => localStorage.getItem("sap_token")),
+    ).toBeNull();
+    expect(logoutRequests).toHaveLength(1);
+    expect(dialogs).toEqual([]);
+  });
+}
