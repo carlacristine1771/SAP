@@ -1,7 +1,14 @@
 import { useEffect } from "react";
 import { api } from "../../api/client.ts";
+import { useMobileMenu } from "../../hooks/useMobileMenu.ts";
 import { useTheme } from "../../hooks/useTheme.ts";
 import Icon from "./Icon.jsx";
+import {
+  MobileMenuClose,
+  MobileMenuOverlay,
+  MobileMenuToggle,
+  mobileDrawerProps,
+} from "./MobileMenu.jsx";
 
 const NAV_ITEMS = [
   ["dashboard", "dashboard", "Dashboard"],
@@ -21,19 +28,10 @@ export default function PsychologistShell({
   children,
 }) {
   const { theme, toggleTheme } = useTheme();
+  const menu = useMobileMenu();
   useEffect(() => {
     document.title = "Painel Psicólogo(a) — SAP SENAC DF";
   }, []);
-  useEffect(() => {
-    if (
-      typeof window.matchMedia !== "function" ||
-      !window.matchMedia("(max-width: 900px)").matches
-    )
-      return;
-    document
-      .querySelector(".sidebar-nav .nav-link.active")
-      ?.scrollIntoView({ block: "nearest", inline: "center" });
-  }, [activePanel]);
   const logout = async () => {
   try {
     await api.post("/auth/logout");
@@ -49,8 +47,13 @@ export default function PsychologistShell({
       <link rel="stylesheet" href="/css/global.css" />
       <link rel="stylesheet" href="/css/painel.css" />
       <link rel="stylesheet" href="/css/painel-psicologo.css" />
+      <link rel="stylesheet" href="/css/mobile-nav.css" />
       <div className="app-shell">
-        <aside className="sidebar sidebar-pastel">
+        <aside
+          className={`sidebar sidebar-pastel${menu.open ? " mobile-open" : ""}`}
+          {...mobileDrawerProps(menu)}
+        >
+          <MobileMenuClose menu={menu} />
           <div className="sidebar-brand">
             <div className="sidebar-brand-top">
               <img src="/senasc.png" className="senac-logo-img" alt="SENAC" />
@@ -72,7 +75,10 @@ export default function PsychologistShell({
                   fontFamily: "inherit",
                   textAlign: "left",
                 }}
-                onClick={() => onNavigate(id)}
+                onClick={() => {
+                  menu.close();
+                  onNavigate(id);
+                }}
                 key={id}
               >
                 <span className="nav-icon">
@@ -104,12 +110,15 @@ export default function PsychologistShell({
                 aria-label="Sair"
               >
                 <Icon name="logout" />
+                <span className="btn-logout-label">Sair</span>
               </button>
             </div>
           </div>
         </aside>
+        <MobileMenuOverlay menu={menu} />
         <div className="main-wrap">
           <header className="topbar">
+            <MobileMenuToggle menu={menu} />
             <div className="topbar-left">
               <div className="topbar-page-title">
                 {NAV_ITEMS.find(([id]) => id === activePanel)?.[2]}
@@ -127,15 +136,6 @@ export default function PsychologistShell({
                 aria-label="Alternar tema claro e escuro"
               >
                 <Icon name={theme === "dark" ? "sun" : "moon"} />
-              </button>
-              <button
-                type="button"
-                className="mobile-logout"
-                onClick={logout}
-                title="Sair"
-                aria-label="Sair"
-              >
-                <Icon name="logout" />
               </button>
             </div>
           </header>

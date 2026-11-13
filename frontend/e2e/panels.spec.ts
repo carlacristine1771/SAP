@@ -82,10 +82,18 @@ async function mockApi(page: Page, role: "PSICOLOGO" | "COORDENACAO") {
   });
 }
 
+// No celular (até 900px) os itens de navegação ficam no menu lateral.
+async function openMenuIfMobile(page: Page) {
+  if ((page.viewportSize()?.width ?? 1280) <= 900) {
+    await page.getByRole("button", { name: "Abrir menu" }).click();
+  }
+}
+
 test("mantém a aba na URL e permite links diretos", async ({ page }) => {
   await mockApi(page, "PSICOLOGO");
   await page.goto("/painel/psicologo/calendario");
   await expect(page.locator(".topbar-page-title")).toHaveText("Calendário");
+  await openMenuIfMobile(page);
   await page.getByRole("button", { name: "Alunos", exact: true }).click();
   await expect(page).toHaveURL(/\/painel\/psicologo\/alunos$/);
   await expect(page.locator(".topbar-page-title")).toHaveText("Alunos");
@@ -105,6 +113,7 @@ test("protege cadastro alterado ao trocar de aba", async ({ page }) => {
     .getByRole("button", { name: "Cancelar" })
     .click();
   await expect(page.locator(".modal-overlay.open")).toHaveCount(0);
+  await openMenuIfMobile(page);
   await page.getByRole("button", { name: "Atendimentos", exact: true }).click();
   await expect(page).toHaveURL(/\/painel\/coordenacao\/atendimentos$/);
 });

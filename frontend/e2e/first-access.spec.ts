@@ -91,6 +91,10 @@ test("first access, password change, logout and new login", async ({
   );
   expect(api.changes()).toBe(1);
   // Real SAP logout control, with all API responses simulated above.
+  // On mobile (up to 900px) it lives inside the side menu.
+  if ((page.viewportSize()?.width ?? 1280) <= 900) {
+    await page.getByRole("button", { name: "Abrir menu" }).click();
+  }
   await page.locator('button[aria-label="Sair"]:visible').click();
   await expect(page).toHaveURL(/\/$/);
   expect(api.logouts()).toBe(1);

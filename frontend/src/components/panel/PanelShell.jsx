@@ -1,7 +1,14 @@
 import { useEffect } from "react";
 import { api } from "../../api/client.ts";
+import { useMobileMenu } from "../../hooks/useMobileMenu.ts";
 import { useTheme } from "../../hooks/useTheme.ts";
 import Icon from "./Icon.jsx";
+import {
+  MobileMenuClose,
+  MobileMenuOverlay,
+  MobileMenuToggle,
+  mobileDrawerProps,
+} from "./MobileMenu.jsx";
 
 export default function PanelShell({
   session,
@@ -10,6 +17,7 @@ export default function PanelShell({
   children,
 }) {
   const { theme, toggleTheme } = useTheme();
+  const menu = useMobileMenu();
   const adminUnit = Boolean(session?.unidadeId);
   const unitName =
     session?.unidade || (adminUnit ? "Unidade vinculada" : "SENAC DF");
@@ -31,16 +39,6 @@ export default function PanelShell({
   useEffect(() => {
     document.title = "Painel Administrador — SAP SENAC DF";
   }, []);
-  useEffect(() => {
-    if (
-      typeof window.matchMedia !== "function" ||
-      !window.matchMedia("(max-width: 900px)").matches
-    )
-      return;
-    document
-      .querySelector(".sidebar-nav .nav-link.active")
-      ?.scrollIntoView({ block: "nearest", inline: "center" });
-  }, [activePanel]);
 
   const logout = async (event) => {
     console.log("LOGOUT FOI CLICADO");
@@ -63,8 +61,13 @@ export default function PanelShell({
       <link rel="stylesheet" href="/css/global.css" />
       <link rel="stylesheet" href="/css/painel.css" />
       <link rel="stylesheet" href="/css/painel-admin.css" />
+      <link rel="stylesheet" href="/css/mobile-nav.css" />
       <div className="app-shell">
-        <aside className="sidebar sidebar-admin" id="sidebar">
+        <aside
+          className={`sidebar sidebar-admin${menu.open ? " mobile-open" : ""}`}
+          {...mobileDrawerProps(menu)}
+        >
+          <MobileMenuClose menu={menu} />
           <div className="sidebar-brand">
             <div className="sidebar-brand-top">
               <img
@@ -85,7 +88,10 @@ export default function PanelShell({
               <button
                 type="button"
                 className={`nav-link${activePanel === id ? " active" : ""}`}
-                onClick={() => onNavigate(id)}
+                onClick={() => {
+                  menu.close();
+                  onNavigate(id);
+                }}
                 key={id}
                 style={{
                   width: "100%",
@@ -122,12 +128,15 @@ export default function PanelShell({
                 aria-label="Sair"
               >
                 <Icon name="logout" strokeWidth={1.8} />
+                <span className="btn-logout-label">Sair</span>
               </button>
             </div>
           </div>
         </aside>
+        <MobileMenuOverlay menu={menu} />
         <div className="main-wrap">
           <header className="topbar">
+            <MobileMenuToggle menu={menu} />
             <div className="topbar-left">
               <div className="topbar-page-title">
                 {panelTitles[activePanel]}
@@ -145,15 +154,6 @@ export default function PanelShell({
                 aria-label="Alternar tema claro e escuro"
               >
                 <Icon name={theme === "dark" ? "sun" : "moon"} />
-              </button>
-              <button
-                type="button"
-                className="mobile-logout"
-                onClick={logout}
-                title="Sair"
-                aria-label="Sair"
-              >
-                <Icon name="logout" strokeWidth={1.8} />
               </button>
               <button
                 type="button"

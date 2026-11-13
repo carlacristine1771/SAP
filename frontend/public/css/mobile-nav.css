@@ -1,0 +1,260 @@
+/* ============================================================
+   SAP — menu lateral mobile (até 900px)
+   Carregado depois dos demais estilos dos painéis. Fora da media query
+   só existem regras que escondem os controles novos, para que o desktop
+   continue idêntico. As regras usam !important porque global.css aplica
+   !important à barra inferior que este menu substitui.
+   ============================================================ */
+
+.mobile-menu-toggle,
+.mobile-menu-close,
+.mobile-menu-overlay,
+.btn-logout-label {
+  display: none;
+}
+
+@media (max-width: 900px) {
+  /* Cabeçalho: menu à esquerda, título ao centro, tema à direita;
+     os botões de ação descem para a segunda linha. */
+  .main-wrap {
+    padding-bottom: env(safe-area-inset-bottom) !important;
+  }
+  .app-shell .topbar {
+    display: grid !important;
+    grid-template-columns: 42px minmax(0, 1fr) minmax(0, 1fr) 42px !important;
+    align-items: center !important;
+    gap: 8px 10px !important;
+    flex-direction: initial !important;
+  }
+  .app-shell .topbar .topbar-left {
+    grid-column: 2 / 4 !important;
+    grid-row: 1 !important;
+    width: auto !important;
+    min-width: 0 !important;
+  }
+  .app-shell .topbar .topbar-right {
+    display: contents !important;
+  }
+  .app-shell .topbar .topbar-right > .btn-theme {
+    grid-column: 4 !important;
+    grid-row: 1 !important;
+    justify-self: end !important;
+    width: 42px !important;
+    height: 42px !important;
+  }
+  .app-shell .topbar .topbar-right > .btn {
+    grid-row: 2 !important;
+    grid-column: 1 / -1 !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    min-height: 42px !important;
+    justify-content: center !important;
+  }
+  .app-shell .topbar .topbar-right > .btn:has(+ .btn) {
+    grid-column: 1 / 3 !important;
+  }
+  .app-shell .topbar .topbar-right > .btn + .btn {
+    grid-column: 3 / 5 !important;
+  }
+  .app-shell .topbar .topbar-page-title {
+    overflow-wrap: anywhere;
+  }
+
+  .mobile-menu-toggle {
+    grid-column: 1;
+    grid-row: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 42px;
+    height: 42px;
+    padding: 0;
+    border: 1.5px solid var(--gray-200);
+    border-radius: var(--r-sm);
+    background: var(--white);
+    color: var(--gray-500);
+    cursor: pointer;
+  }
+  .mobile-menu-toggle:hover {
+    background: var(--gray-100);
+    color: var(--ink);
+  }
+  [data-theme="dark"] .mobile-menu-toggle {
+    background: var(--gray-100);
+    border-color: var(--gray-300);
+  }
+  .mobile-menu-toggle svg,
+  .mobile-menu-close svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  /* Menu lateral: a mesma sidebar do desktop, deslizando da esquerda. */
+  .app-shell .sidebar {
+    position: fixed !important;
+    top: 0 !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: auto !important;
+    z-index: 1001 !important;
+    width: min(86vw, 320px) !important;
+    min-width: 0 !important;
+    height: 100% !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    display: flex !important;
+    flex-direction: column !important;
+    overflow: hidden !important;
+    border-top: 0 !important;
+    border-bottom: 0 !important;
+    box-shadow: 8px 0 32px rgba(0, 0, 20, 0.28) !important;
+    transform: translateX(-105%) !important;
+    visibility: hidden !important;
+    transition:
+      transform 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+      visibility 0s linear 0.25s !important;
+  }
+  .app-shell .sidebar.mobile-open {
+    transform: translateX(0) !important;
+    visibility: visible !important;
+    transition:
+      transform 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+      visibility 0s !important;
+  }
+  .app-shell .sidebar::before {
+    display: block !important;
+  }
+  .app-shell .sidebar .sidebar-brand {
+    display: block !important;
+    padding: 20px 64px 16px 20px !important;
+  }
+  .app-shell .sidebar .sidebar-footer {
+    display: block !important;
+    padding: 12px 16px calc(12px + env(safe-area-inset-bottom)) !important;
+  }
+
+  .app-shell .sidebar .sidebar-nav {
+    display: block !important;
+    flex: 1 1 auto !important;
+    height: auto !important;
+    padding: 8px 0 !important;
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+    white-space: normal !important;
+    scroll-snap-type: none !important;
+    border-top: 0 !important;
+  }
+  .app-shell .sidebar .sidebar-nav .nav-section {
+    display: block !important;
+  }
+  .app-shell .sidebar .nav-link {
+    display: flex !important;
+    flex: none !important;
+    flex-direction: row !important;
+    justify-content: flex-start !important;
+    align-items: center !important;
+    gap: 12px !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    height: auto !important;
+    min-height: 48px !important;
+    padding: 12px 22px !important;
+    border-top: 0 !important;
+    border-left: 3px solid transparent !important;
+    border-radius: 0 !important;
+    font-size: 14.5px !important;
+    line-height: 1.3 !important;
+    text-align: left !important;
+    scroll-snap-align: none !important;
+  }
+  .app-shell .sidebar .nav-link.active {
+    border-left-color: var(--senac-orange) !important;
+  }
+  .app-shell .sidebar .nav-icon,
+  .app-shell .sidebar .nav-icon svg {
+    width: 20px !important;
+    height: 20px !important;
+  }
+  .app-shell .sidebar .nav-label {
+    width: auto !important;
+    overflow: visible !important;
+    text-overflow: clip !important;
+  }
+  .app-shell .sidebar .nav-badge {
+    position: static !important;
+    transform: none !important;
+  }
+
+  .mobile-menu-close {
+    position: absolute;
+    top: 16px;
+    right: 14px;
+    z-index: 2;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 42px;
+    height: 42px;
+    padding: 0;
+    border: 1.5px solid rgba(255, 255, 255, 0.18);
+    border-radius: var(--r-sm);
+    background: transparent;
+    color: rgba(255, 255, 255, 0.8);
+    cursor: pointer;
+  }
+  .sidebar-pastel .mobile-menu-close {
+    border-color: rgba(160, 100, 30, 0.25);
+    color: #3a2a10;
+  }
+  [data-theme="dark"] .sidebar-pastel .mobile-menu-close {
+    border-color: rgba(255, 255, 255, 0.18);
+    color: var(--ink);
+  }
+
+  /* Opção Sair dentro do menu, com texto. */
+  .app-shell .sidebar .sidebar-user {
+    flex-wrap: wrap !important;
+  }
+  .app-shell .sidebar .btn-logout {
+    flex: 1 0 100% !important;
+    width: 100% !important;
+    height: 46px !important;
+    justify-content: flex-start !important;
+    gap: 10px !important;
+    margin-top: 6px !important;
+    padding: 0 12px !important;
+    border: 1px solid currentColor !important;
+    font: inherit !important;
+    font-size: 14px !important;
+    font-weight: 600 !important;
+    color: rgba(255, 255, 255, 0.82) !important;
+    cursor: pointer;
+  }
+  .app-shell .sidebar-pastel .btn-logout {
+    color: #3a2a10 !important;
+  }
+  [data-theme="dark"] .app-shell .sidebar-pastel .btn-logout {
+    color: var(--ink) !important;
+  }
+  .btn-logout-label {
+    display: inline;
+  }
+
+  .mobile-menu-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    display: block;
+    background: rgba(10, 10, 30, 0.5);
+  }
+  .mobile-menu-overlay[hidden] {
+    display: none;
+  }
+}
+
+@media (max-width: 900px) and (prefers-reduced-motion: reduce) {
+  .app-shell .sidebar,
+  .app-shell .sidebar.mobile-open {
+    transition: none !important;
+  }
+}

@@ -128,10 +128,11 @@ test("logout da coordenação remove o token compartilhado mas não solicita rem
   await second.goto("/");
   await expect(second).toHaveURL(/\/painel\/coordenacao$/);
   page.once("dialog", (dialog) => dialog.accept());
-  await page
-    .locator(".btn-logout:visible, .mobile-logout:visible")
-    .first()
-    .click();
+  // No celular (até 900px), Sair fica dentro do menu lateral.
+  if ((page.viewportSize()?.width ?? 1280) <= 900) {
+    await page.getByRole("button", { name: "Abrir menu" }).click();
+  }
+  await page.getByRole("button", { name: "Sair" }).click();
   await expect(page).toHaveURL("http://127.0.0.1:4174/");
   expect(
     await page.evaluate(() => localStorage.getItem("sap_token")),

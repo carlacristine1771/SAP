@@ -1,6 +1,13 @@
 import { useEffect } from "react";
+import { useMobileMenu } from "../../hooks/useMobileMenu.ts";
 import { useTheme } from "../../hooks/useTheme.ts";
 import Icon from "./Icon.jsx";
+import {
+  MobileMenuClose,
+  MobileMenuOverlay,
+  MobileMenuToggle,
+  mobileDrawerProps,
+} from "./MobileMenu.jsx";
 
 export default function OperationalShell({
   profile,
@@ -11,6 +18,7 @@ export default function OperationalShell({
   children,
 }) {
   const { theme, toggleTheme } = useTheme();
+  const menu = useMobileMenu();
   const coordinator = profile === "coordenacao";
   const label = coordinator ? "Coordenação" : "Instrutor";
   const navItems = [
@@ -32,16 +40,6 @@ export default function OperationalShell({
   useEffect(() => {
     document.title = `Painel ${label} — SAP SENAC DF`;
   }, [label]);
-  useEffect(() => {
-    if (
-      typeof window.matchMedia !== "function" ||
-      !window.matchMedia("(max-width: 900px)").matches
-    )
-      return;
-    document
-      .querySelector(".sidebar-nav .nav-link.active")
-      ?.scrollIntoView({ block: "nearest", inline: "center" });
-  }, [activePanel]);
 const logout = (event) => {
   event.preventDefault();
   event.stopPropagation();
@@ -56,8 +54,13 @@ const logout = (event) => {
       <link rel="stylesheet" href="/css/global.css" />
       <link rel="stylesheet" href="/css/painel.css" />
       <link rel="stylesheet" href={`/css/painel-${profile}.css`} />
+      <link rel="stylesheet" href="/css/mobile-nav.css" />
       <div className="app-shell">
-        <aside className="sidebar sidebar-pastel">
+        <aside
+          className={`sidebar sidebar-pastel${menu.open ? " mobile-open" : ""}`}
+          {...mobileDrawerProps(menu)}
+        >
+          <MobileMenuClose menu={menu} />
           <div className="sidebar-brand">
             <div className="sidebar-brand-top">
               <img src="/senasc.png" className="senac-logo-img" alt="SENAC" />
@@ -81,7 +84,10 @@ const logout = (event) => {
                   fontFamily: "inherit",
                   textAlign: "left",
                 }}
-                onClick={() => onNavigate(id)}
+                onClick={() => {
+                  menu.close();
+                  onNavigate(id);
+                }}
                 key={id}
               >
                 <span className="nav-icon">
@@ -108,12 +114,15 @@ const logout = (event) => {
                 aria-label="Sair"
               >
                 <Icon name="logout" />
+                <span className="btn-logout-label">Sair</span>
               </button>
             </div>
           </div>
         </aside>
+        <MobileMenuOverlay menu={menu} />
         <div className="main-wrap">
           <header className="topbar">
+            <MobileMenuToggle menu={menu} />
             <div className="topbar-left">
               <div className="topbar-page-title">{titles[activePanel]}</div>
               <div className="topbar-breadcrumb">
@@ -129,15 +138,6 @@ const logout = (event) => {
                 aria-label="Alternar tema claro e escuro"
               >
                 <Icon name={theme === "dark" ? "sun" : "moon"} />
-              </button>
-              <button
-                type="button"
-                className="mobile-logout"
-                onClick={logout}
-                title="Sair"
-                aria-label="Sair"
-              >
-                <Icon name="logout" />
               </button>
               <button
                 type="button"
