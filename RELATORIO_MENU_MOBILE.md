@@ -69,8 +69,8 @@ Medição com dados fictícios no perfil de coordenação:
 
 Causa: o bloco `@media(max-width:960px)` de `global.css` aplica
 `.sidebar{transform:translateX(-100%)}`, e nenhum código adiciona a classe
-`.open` que a traria de volta. A regra não foi alterada nesta etapa; a correção
-aguarda decisão.
+`.open` que a traria de volta. A regra não foi alterada no primeiro commit; a
+correção está na seção "Segunda etapa".
 
 ## Arquivos alterados
 
@@ -191,16 +191,57 @@ fechado e aberto), nos cinco perfis, dois temas e cinco larguras.
   `PanelShell.jsx` de `fe77bf2` já falhava nessa verificação. Os arquivos não
   foram reformatados, para não alterar as funções de logout.
 
+## Segunda etapa: barra lateral entre 901 e 960px
+
+Decisão: manter a barra lateral desktop visível nessa faixa, sem estender o
+breakpoint do menu mobile, que continua em 900px.
+
+### Alteração
+
+| Arquivo | Alteração |
+| --- | --- |
+| `frontend/public/css/global.css` | Remove do bloco `@media(max-width:960px)` as regras `.sidebar{transform:translateX(-100%)}` e `.sidebar.open{transform:translateX(0)}`. A segunda nunca era ativada, porque nenhum código adiciona `.open` |
+| `frontend/e2e/mobile-menu.spec.ts` | Os testes de desktop passam a incluir 930px |
+
+Até 900px, a posição da barra já era definida por regras com `!important` (em
+`global.css` e em `mobile-nav.css`), que não dependiam das regras removidas.
+
+### Comparação visual ao redor do breakpoint
+
+Referências gravadas no commit `4d2e155`, antes da correção, e conferidas duas
+vezes: cinco perfis, temas claro e escuro, larguras de 880, 900, 901, 920, 940,
+960, 961 e 980px (80 capturas, tolerância de 0 pixel).
+
+| Larguras | Capturas idênticas depois da correção | Barra lateral depois | Início do conteúdo |
+| --- | --- | --- | --- |
+| 880 e 900px | 20 de 20 | Menu mobile fechado | 0px |
+| 901, 920, 940 e 960px | 0 de 40 (mudança esperada) | Visível, de 0 a 230px | 230px |
+| 961 e 980px | 20 de 20 | Visível, de 0 a 230px | 230px |
+
+Em nenhuma largura houve rolagem horizontal. Antes da correção, nas larguras de
+901 a 960px, a barra ficava em −230px e o conteúdo começava em 230px.
+
+### Testes depois da correção
+
+| Verificação | Resultado |
+| --- | --- |
+| Comparação visual do desktop (1024, 1280 e 1440px) | 60 de 60 idênticas a `fe77bf2` |
+| `npm test` | 54/54 aprovados |
+| `npm run typecheck` e `npm run build` | Aprovados |
+| Playwright, padrão com API local | 99 aprovados, 26 falhas (as mesmas pré-existentes), 31 ignorados |
+| Playwright, `playwright.p0.config.ts` | 22 aprovados, 7 falhas (as mesmas pré-existentes), 1 ignorado |
+
+Os 5 aprovados a mais são os testes de desktop em 930px.
+
 ## Pendências
 
 1. Commit separado com a correção do logout de Coordenação e Instrutor e a
    remoção do `alert` e do `console.log`, com ajuste de `session-diagnosis.spec.ts`.
-2. Decidir a correção da faixa de 901 a 960px.
-3. Responsividade de formulários, modais, cards, tabelas, gráficos e calendários.
-4. Atualizar os scripts manuais `scripts/audit-mobile-panels.mjs` e
+2. Responsividade de formulários, modais, cards, tabelas, gráficos e calendários.
+3. Atualizar os scripts manuais `scripts/audit-mobile-panels.mjs` e
    `scripts/smoke-psychologist.mjs`, que ainda procuram `.mobile-logout`.
-5. As regras antigas da barra inferior e de `.mobile-logout` continuam em
+4. As regras antigas da barra inferior e de `.mobile-logout` continuam em
    `global.css` e podem ser removidas depois.
-6. Unificar os três componentes de painel.
-7. Revisar as falhas pré-existentes de `panels.spec.ts` (origens dos mocks) e de
+5. Unificar os três componentes de painel.
+6. Revisar as falhas pré-existentes de `panels.spec.ts` (origens dos mocks) e de
    `permissions.p0.spec.ts:251`.

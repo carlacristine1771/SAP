@@ -170,7 +170,8 @@ test.describe("desktop", () => {
     test.skip(testInfo.project.name !== "desktop", "Verificação do desktop");
   });
 
-  for (const width of [1280, 1440]) {
+  // 930px cobre a faixa de 901 a 960px, em que a barra lateral sumia.
+  for (const width of [930, 1280, 1440]) {
     for (const key of keys) {
       test(`${key}: desktop em ${width}px mantém a barra lateral`, async ({ page }) => {
         await page.setViewportSize({ width, height: 900 });
